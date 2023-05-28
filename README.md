@@ -1,6 +1,6 @@
 # Trabalho Fundamentos de Projeto e Análise de Algoritmos
 Professor: João Caram <br />
-Aluno: Matheus Belo, Marcos Felipe, Natanael Gonçalves, Leonardo Augusto
+Aluno: Matheus Belo, Marcos Felipe, Natanael Gonzales, Leonardo Augusto
 
 As tarefas preparatórias do seu grupo de trabalho são:<br />
 a) Projetar e implementar uma solução para o problema do Caixeiro Viajante utilizando força
