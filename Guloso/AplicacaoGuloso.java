@@ -3,22 +3,50 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class AplicacaoGuloso {
-    static Random aleatorio = new Random(42);
+public class TesteAutomatizado {
+    static Random aleatorio = new Random();
+    static final long TEMPO_LIMITE = 4 * 60 * 1000; // 4 minutos em milissegundos
 
     public static void main(String[] args) {
-        int vertices = 6;
-        int[][] grafo = grafoCompletoPonderado(vertices);
+        int tamanhoInicial = 5;
+        int tamanhoMaximo = 100;
+        int repeticoes = 70;
 
-        List<Integer> caminho = caixeiroViajanteGuloso(grafo);
+        int tamanhoConjunto = tamanhoInicial;
 
-        System.out.println("Caminho percorrido: " + caminho);
-        System.out.println("Distância total: " + calcularDistanciaCaminho(grafo, caminho));
+        while (tamanhoConjunto <= tamanhoMaximo) {
+            List<Long> tempos = new ArrayList<>();
+
+            for (int i = 0; i < repeticoes; i++) {
+                int[][] grafo = grafoCompletoPonderado(tamanhoConjunto);
+                long tempoInicial = System.currentTimeMillis();
+                caixeiroViajanteGuloso(grafo);
+                long tempoFinal = System.currentTimeMillis();
+                long tempoExecucao = tempoFinal - tempoInicial;
+                tempos.add(tempoExecucao);
+
+                if (tempoExecucao > TEMPO_LIMITE) {
+                    break;
+                }
+            }
+
+            long tempoMedio = calcularTempoMedio(tempos);
+
+            System.out.println("Tamanho do conjunto: " + tamanhoConjunto);
+            System.out.println("Tempo médio de solução: " + tempoMedio + " ms");
+
+            if (tempoMedio > TEMPO_LIMITE) {
+                int verticesLimite = tamanhoConjunto - 1;
+                System.out.println("Número N-1: " + verticesLimite);
+                break;
+            }
+
+            tamanhoConjunto++;
+        }
     }
 
     public static int[][] grafoCompletoPonderado(int vertices) {
         int[][] matriz = new int[vertices][vertices];
-        //Random aleatorio = new Random(); - > receber valores diferentes na matriz toda vez que rodar o código
         int valor;
         for (int i = 0; i < matriz.length; i++) {
             matriz[i][i] = -1;
@@ -26,13 +54,12 @@ public class AplicacaoGuloso {
                 valor = aleatorio.nextInt(25) + 1;
                 matriz[i][j] = valor;
                 matriz[j][i] = valor;
-                System.out.println("["+i+"]["+j+"] - "+matriz[i][j]);
             }
         }
         return matriz;
     }
 
-    public static List<Integer> caixeiroViajanteGuloso(int[][] grafo) {
+    public static void caixeiroViajanteGuloso(int[][] grafo) {
         List<Integer> caminho = new ArrayList<>();
         int vertices = grafo.length;
 
@@ -48,7 +75,8 @@ public class AplicacaoGuloso {
 
         caminho.add(0); // Voltar para a cidade de origem
 
-        return caminho;
+        System.out.println("Caminho percorrido: " + caminho);
+        System.out.println("Distância total: " + calcularDistanciaCaminho(grafo, caminho));
     }
 
     public static int encontrarProximoVertice(int[][] grafo, int verticeAtual, boolean[] visitados) {
@@ -73,5 +101,13 @@ public class AplicacaoGuloso {
             distancia += grafo[origem][destino];
         }
         return distancia;
+    }
+
+    public static long calcularTempoMedio(List<Long> tempos) {
+        long soma = 0;
+        for (Long tempo : tempos) {
+            soma += tempo;
+        }
+        return tempos.isEmpty() ? 0 : soma / tempos.size();
     }
 }
