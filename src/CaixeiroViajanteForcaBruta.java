@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -101,21 +104,35 @@ public class CaixeiroViajanteForcaBruta {
         }
         return matriz;
     }
+    private static void escreverSolucaoEmArquivo(String nomeArquivo, List solucao, long tempo) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo, true))) {
+            writer.write(solucao + " - ");
+            writer.write(" tempo: " + tempo);
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public static void main(String[] args) {
-        int vertices = 5, tamanhoGrupo = 70;
+        int vertices = 10, tamanhoGrupo = 1000;
         boolean continuar = true;
-        long elapsedTime = 0;
-        long startTime = System.currentTimeMillis();
+        long elapsedTime = 0, mediaTempo = 0, elapsedTotalTime = 0;
+        String nomeArquivo = "forca-bruta.txt";
+        List<Integer> melhorCaminho = null;
         while (continuar) {
             for (int tamanhoAtual = 0; tamanhoAtual < tamanhoGrupo; tamanhoAtual++) {
+                long startTime = System.currentTimeMillis();
                 int[][] grafo = grafoCompletoPonderado(vertices);
                 CaixeiroViajanteForcaBruta caixeiroViajante = new CaixeiroViajanteForcaBruta(grafo);
                 caixeiroViajante.encontrarMelhorCaminho();
-                List<Integer> melhorCaminho = caixeiroViajante.getMelhorCaminho();
+                melhorCaminho = caixeiroViajante.getMelhorCaminho();
                 System.out.println("Melhor caminho encontrado para tamanho " + tamanhoAtual + " do vertice " + vertices + ". Seguindo...");
-                System.out.println("-------------------------------------------------------");
                 elapsedTime = System.currentTimeMillis() - startTime;
-                if (elapsedTime > 240000) {
+                elapsedTotalTime += elapsedTime;
+                //mediaTempo = (elapsedTime / tamanhoGrupo);
+                escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, elapsedTime);
+                System.out.println("-------------------------------------------------------");
+                /*if (elapsedTime > 240000) {
                     System.out.println("O número de vértices que executa iterando por 4min é " + vertices);
                     System.out.println("-----------------------------------------");
                     System.out.println("Execução interrompida");
@@ -123,15 +140,14 @@ public class CaixeiroViajanteForcaBruta {
                     System.out.println("N-1: " + (vertices-1));
                     continuar = false;
                     break;
-                }
-                /*for (Integer cidade : melhorCaminho) {
-                //    System.out.print(cidade + " ");
                 }*/
             }
-            long mediaTempo = (elapsedTime / tamanhoGrupo);
-            System.out.println("Tempo total de iteração: " + elapsedTime + " millisegundos.");
-            System.out.println("Tempo médio de iteração para grupo de " + vertices + " vertices: " + mediaTempo + " millisegundos.");
-            vertices++;
+            continuar = false;
+            mediaTempo = (elapsedTotalTime / tamanhoGrupo);
+            System.out.println("Tempo total medio de iteração: " + mediaTempo + " millisegundos.");
+            //System.out.println("Tempo médio de iteração para grupo de " + vertices + " vertices: " + mediaTempo + " millisegundos.");
         }
+        //escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, mediaTempo);
     }
+
 }
