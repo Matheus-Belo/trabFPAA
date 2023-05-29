@@ -2,68 +2,71 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class AplicacaoGuloso {
+public class AplicacaoAlgoritmoGuloso {
+
+    static Random aleatorio = new Random();
 
     public static void main(String[] args) {
-        int vertices = 5;
-        boolean continua = true;
-        long startTime = System.currentTimeMillis();
+        int iteracoes = 70;
+        int limiteVertices = 5;
+        int incrementoVertices = 1;
 
-        while (continua) {
-            long tamanho = 75;
-            long tempoTotalTamanho = 0;
+        System.out.println("Teste do Caixeiro Viajante");
 
-            long tamanhoInicioTempo = System.currentTimeMillis();
+        for (int vertices = 5; vertices <= limiteVertices; vertices += incrementoVertices) {
+            System.out.println("Número de Vértices: " + vertices);
+            long tempoTotal = 0;
+            int iteracao;
 
-            for (int testeCadaTamanho = 0; testeCadaTamanho < tamanho; testeCadaTamanho++) {
+            boolean tempoExcedido = false;
+            List<Long> temposIteracao = new ArrayList<>();
+
+            for (iteracao = 1; iteracao <= iteracoes; iteracao++) {
                 int[][] grafo = grafoCompletoPonderado(vertices);
 
-                List<Integer> caminhoAtual = new ArrayList<>();
-                caminhoAtual.add(0);
+                long tempoInicial = System.currentTimeMillis();
+                long tempoLimite = tempoInicial + 4 * 60 * 1000; // 4 minutos
+                List<Integer> caminho = null;
 
-                List<Integer> melhorCaminho = encontrarMelhorCaminhoGuloso(grafo, caminhoAtual);
-                int menorDistancia = calcularDistanciaCaminho(grafo, melhorCaminho);
+                while (System.currentTimeMillis() < tempoLimite && caminho == null) {
+                    caminho = caixeiroViajanteGuloso(grafo);
 
-                System.out.println("vertice - " + vertices);
-                System.out.println("Teste " + (testeCadaTamanho + 1) + " Melhor caminho: " + melhorCaminho);
-                System.out.println("Teste " + (testeCadaTamanho + 1) + " Menor distância: " + menorDistancia);
+                    if (System.currentTimeMillis() >= tempoLimite) {
+                        tempoExcedido = true;
+                        break;
+                    }
+                }
 
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                if (elapsedTime > 4 * 60 * 1000) {
-                    System.out.println("Tempo limite excedido");
-                    continua = false;
+                long tempoFinal = System.currentTimeMillis();
+
+                long tempoIteracao = tempoFinal - tempoInicial;
+                tempoTotal += tempoIteracao;
+                temposIteracao.add(tempoIteracao);
+
+                if (tempoExcedido) {
+                    System.out.println("Iteração " + iteracao + ": Tempo Limite Excedido");
                     break;
                 }
             }
 
-            long tamanhoFinalTempo = System.currentTimeMillis();
-            long tamanhoTempo = tamanhoFinalTempo - tamanhoInicioTempo;
-            tempoTotalTamanho += tamanhoTempo;
-            long tempoMedio = tempoTotalTamanho / tamanho;
-
-            System.out.println("Para N vértices = " + vertices + ", Tempo Médio Gasto: " + tempoMedio + " ms");
-
-            if (tempoMedio >= 3500) {
-                System.out.println("Tempo médio excedeu o limite");
-                continua = false;
-                break;
+            if (iteracao > iteracoes) {
+                System.out.println("Número máximo de iterações alcançado. Tempo Total: " + tempoTotal + " ms");
+            } else {
+                for (int i = 0; i < iteracao - 1; i++) {
+                    System.out.println("Iteração " + (i + 1) + ": Tempo de Solução: " + temposIteracao.get(i) + " ms");
+                }
+                long tempoMedio = tempoTotal / (iteracao - 1);
+                System.out.println("Tempo Médio: " + tempoMedio + " ms");
             }
 
-            vertices++;
+            System.out.println("------------------------------------");
 
-            long elapsedTime = System.currentTimeMillis() - startTime;
-            if (elapsedTime > 4 * 60 * 1000) {
-                System.out.println("Tempo limite excedido");
-                continua = false;
-                break;
-            }
+            limiteVertices += incrementoVertices;
         }
     }
 
     public static int[][] grafoCompletoPonderado(int vertices) {
         int[][] matriz = new int[vertices][vertices];
-        Random aleatorio = new Random();
-
         int valor;
         for (int i = 0; i < matriz.length; i++) {
             matriz[i][i] = -1;
@@ -71,46 +74,42 @@ public class AplicacaoGuloso {
                 valor = aleatorio.nextInt(25) + 1;
                 matriz[i][j] = valor;
                 matriz[j][i] = valor;
-                System.out.println("[" + i + "][" + j + "] - " + matriz[i][j]);
             }
         }
         return matriz;
     }
 
-    public static List<Integer> encontrarMelhorCaminhoGuloso(int[][] grafo, List<Integer> caminhoAtual) {
-        List<Integer> melhorCaminho = new ArrayList<>(caminhoAtual);
-        int posicaoAtual = caminhoAtual.get(caminhoAtual.size() - 1);
+    public static List<Integer> caixeiroViajanteGuloso(int[][] grafo) {
+        List<Integer> caminho = new ArrayList<>();
+        int vertices = grafo.length;
 
-        while (melhorCaminho.size() < grafo.length) {
-            int proximoVertice = encontrarProximoVertice(grafo, posicaoAtual, melhorCaminho);
-            melhorCaminho.add(proximoVertice);
-            posicaoAtual = proximoVertice;
+        boolean[] visitados = new boolean[vertices];
+        caminho.add(0);
+        visitados[0] = true;
+
+        for (int i = 1; i < vertices; i++) {
+            int proximoVertice = encontrarProximoVertice(grafo, caminho.get(caminho.size() - 1), visitados);
+            caminho.add(proximoVertice);
+            visitados[proximoVertice] = true;
         }
 
-        return melhorCaminho;
+        caminho.add(0); // Voltar para a cidade de origem
+
+        return caminho;
     }
 
-    public static int encontrarProximoVertice(int[][] grafo, int posicaoAtual, List<Integer> caminho) {
+    public static int encontrarProximoVertice(int[][] grafo, int verticeAtual, boolean[] visitados) {
         int proximoVertice = -1;
         int menorDistancia = Integer.MAX_VALUE;
 
         for (int i = 0; i < grafo.length; i++) {
-            if (!caminho.contains(i) && grafo[posicaoAtual][i] != -1 && grafo[posicaoAtual][i] < menorDistancia) {
+            if (!visitados[i] && grafo[verticeAtual][i] != -1 && grafo[verticeAtual][i] < menorDistancia) {
+                menorDistancia = grafo[verticeAtual][i];
                 proximoVertice = i;
-                menorDistancia = grafo[posicaoAtual][i];
             }
         }
 
         return proximoVertice;
     }
-
-    public static int calcularDistanciaCaminho(int[][] grafo, List<Integer> caminho) {
-        int distancia = 0;
-        for (int i = 0; i < caminho.size() - 1; i++) {
-            int origem = caminho.get(i);
-            int destino = caminho.get(i + 1);
-            distancia += grafo[origem][destino];
-        }
-        return distancia;
-    }
 }
+
