@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class TesteAutomatizado {
+public class TesteCaixeiroViajante {
 
     static Random aleatorio = new Random();
 
@@ -26,23 +26,18 @@ public class TesteAutomatizado {
                 long tempoLimite = tempoInicial + 4 * 60 * 1000; // 4 minutos
                 List<Integer> caminho = null;
 
-                while (caminho == null && System.currentTimeMillis() < tempoLimite) {
+                while (System.currentTimeMillis() < tempoLimite) {
                     caminho = caixeiroViajanteGuloso(grafo);
                 }
 
                 long tempoFinal = System.currentTimeMillis();
 
-                if (caminho != null) {
-                    long tempoIteracao = tempoFinal - tempoInicial;
-                    tempoTotal += tempoIteracao;
+                long tempoIteracao = tempoFinal - tempoInicial;
+                tempoTotal += tempoIteracao;
 
-                    System.out.println("Iteração " + iteracao + ": Tempo de Solução: " + tempoIteracao + " ms");
+                System.out.println("Iteração " + iteracao + ": Tempo de Solução: " + tempoIteracao + " ms");
 
-                    if (tempoIteracao >= 4 * 60 * 1000) {
-                        break;
-                    }
-                } else {
-                    System.out.println("Iteração " + iteracao + ": Tempo Limite Excedido");
+                if (tempoIteracao >= 4 * 60 * 1000) {
                     break;
                 }
             }
