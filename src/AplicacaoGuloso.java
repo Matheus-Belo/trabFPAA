@@ -10,7 +10,7 @@ public class AplicacaoGuloso {
         long startTime = System.currentTimeMillis();
 
         while (continua) {
-            long tamanho = 70;
+            long tamanho = 75;
             long tempoTotalTamanho = 0;
 
             long tamanhoInicioTempo = System.currentTimeMillis();
