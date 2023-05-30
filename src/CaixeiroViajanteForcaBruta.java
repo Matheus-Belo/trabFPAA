@@ -89,6 +89,7 @@ public class CaixeiroViajanteForcaBruta {
     public List<Integer> getMelhorCaminho() {
         return melhorCaminho;
     }
+
     public static int[][] grafoCompletoPonderado(int vertices) {
         int[][] matriz = new int[vertices][vertices];
         Random aleatorio = new Random(); // - > receber valores diferentes na matriz toda vez que rodar o código
@@ -99,55 +100,117 @@ public class CaixeiroViajanteForcaBruta {
                 valor = aleatorio.nextInt(25) + 1;
                 matriz[i][j] = valor;
                 matriz[j][i] = valor;
-                //System.out.println("[" + i + "][" + j + "] - " + matriz[i][j]);
+                // System.out.println("[" + i + "][" + j + "] - " + matriz[i][j]);
             }
         }
         return matriz;
     }
-    private static void escreverSolucaoEmArquivo(String nomeArquivo, List solucao, long tempo) {
+
+    private static void escreverSolucaoEmArquivo(int numGrafo, String nomeArquivo, List solucao, long tempo,
+            String algoritmo) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo, true))) {
-            writer.write(solucao + " - ");
-            writer.write(" tempo: " + tempo);
-            writer.newLine();
+
+            if (algoritmo == "guloso") {
+                writer.write("Guloso: ");
+                writer.write(solucao + " - ");
+                writer.write(" tempo: " + tempo);
+                writer.newLine();
+            } else {
+                writer.write("Força Bruta: ");
+                writer.write(solucao + " - ");
+                writer.write(" tempo: " + tempo);
+                writer.newLine();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     public static void main(String[] args) {
         int vertices = 10, tamanhoGrupo = 1000;
         boolean continuar = true;
-        long elapsedTime = 0, mediaTempo = 0, elapsedTotalTime = 0;
-        String nomeArquivo = "forca-bruta.txt";
+        long elapsedTimeFB = 0, mediaTempo = 0, elapsedTotalTime = 0;
+        String nomeArquivo = "caixeiro-viajante.txt";
         List<Integer> melhorCaminho = null;
+        List<Integer> melhorCaminhoGuloso = null;
+
         while (continuar) {
             for (int tamanhoAtual = 0; tamanhoAtual < tamanhoGrupo; tamanhoAtual++) {
-                long startTime = System.currentTimeMillis();
+
                 int[][] grafo = grafoCompletoPonderado(vertices);
                 CaixeiroViajanteForcaBruta caixeiroViajante = new CaixeiroViajanteForcaBruta(grafo);
+
+                // Este bloco calcula o tempo gasto pro grafo em Força Bruta e escreve o arquivo
+                long startTimeFB = System.currentTimeMillis();
                 caixeiroViajante.encontrarMelhorCaminho();
                 melhorCaminho = caixeiroViajante.getMelhorCaminho();
-                System.out.println("Melhor caminho encontrado para tamanho " + tamanhoAtual + " do vertice " + vertices + ". Seguindo...");
-                elapsedTime = System.currentTimeMillis() - startTime;
-                elapsedTotalTime += elapsedTime;
-                //mediaTempo = (elapsedTime / tamanhoGrupo);
-                escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, elapsedTime);
+                elapsedTimeFB = System.currentTimeMillis() - startTimeFB;
+                escreverSolucaoEmArquivo(tamanhoAtual, nomeArquivo, melhorCaminho, elapsedTimeFB, "forca-bruta");
+
+                // Este bloco calcula o tempo gasto pro grafo em Guloso e escreve o arquivo
+                long startTimeGuloso = System.currentTimeMillis();
+                melhorCaminhoGuloso = caixeiroViajanteGuloso(grafo);
+                long elapsedTimeGuloso = System.currentTimeMillis() - startTimeGuloso;
+                escreverSolucaoEmArquivo(tamanhoAtual, nomeArquivo, melhorCaminhoGuloso, elapsedTimeGuloso, "guloso");
+
+                System.out.println("Melhor caminho encontrado para tamanho " + tamanhoAtual + " do vertice " + vertices
+                        + ". Seguindo...");
+                // mediaTempo = (elapsedTime / tamanhoGrupo);
+
                 System.out.println("-------------------------------------------------------");
-                /*if (elapsedTime > 240000) {
-                    System.out.println("O número de vértices que executa iterando por 4min é " + vertices);
-                    System.out.println("-----------------------------------------");
-                    System.out.println("Execução interrompida");
-                    System.out.println("-----------------------------------------");
-                    System.out.println("N-1: " + (vertices-1));
-                    continuar = false;
-                    break;
-                }*/
+                /*
+                 * if (elapsedTime > 240000) {
+                 * System.out.println("O número de vértices que executa iterando por 4min é " +
+                 * vertices);
+                 * System.out.println("-----------------------------------------");
+                 * System.out.println("Execução interrompida");
+                 * System.out.println("-----------------------------------------");
+                 * System.out.println("N-1: " + (vertices-1));
+                 * continuar = false;
+                 * break;
+                 * }
+                 */
             }
             continuar = false;
             mediaTempo = (elapsedTotalTime / tamanhoGrupo);
             System.out.println("Tempo total medio de iteração: " + mediaTempo + " millisegundos.");
-            //System.out.println("Tempo médio de iteração para grupo de " + vertices + " vertices: " + mediaTempo + " millisegundos.");
+            // System.out.println("Tempo médio de iteração para grupo de " + vertices + "
+            // vertices: " + mediaTempo + " millisegundos.");
         }
-        //escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, mediaTempo);
+        // escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, mediaTempo);
+    }
+
+    public static List<Integer> caixeiroViajanteGuloso(int[][] grafo) {
+        List<Integer> caminho = new ArrayList<>();
+        int vertices = grafo.length;
+
+        boolean[] visitados = new boolean[vertices];
+        caminho.add(0);
+        visitados[0] = true;
+
+        for (int i = 1; i < vertices; i++) {
+            int proximoVertice = encontrarProximoVertice(grafo, caminho.get(caminho.size() - 1), visitados);
+            caminho.add(proximoVertice);
+            visitados[proximoVertice] = true;
+        }
+
+        caminho.add(0); // Voltar para a cidade de origem
+
+        return caminho;
+    }
+
+    public static int encontrarProximoVertice(int[][] grafo, int verticeAtual, boolean[] visitados) {
+        int proximoVertice = -1;
+        int menorDistancia = Integer.MAX_VALUE;
+
+        for (int i = 0; i < grafo.length; i++) {
+            if (!visitados[i] && grafo[verticeAtual][i] != -1 && grafo[verticeAtual][i] < menorDistancia) {
+                menorDistancia = grafo[verticeAtual][i];
+                proximoVertice = i;
+            }
+        }
+
+        return proximoVertice;
     }
 
 }

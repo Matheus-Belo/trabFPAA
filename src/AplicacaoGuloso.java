@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class AplicacaoAlgoritmoGuloso {
+public class AplicacaoGuloso {
 
     static Random aleatorio = new Random();
 
