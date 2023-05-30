@@ -154,7 +154,7 @@ public class CaixeiroViajanteForcaBruta {
                 long elapsedTimeGuloso = System.currentTimeMillis() - startTimeGuloso;
                 escreverSolucaoEmArquivo(tamanhoAtual, nomeArquivo, melhorCaminhoGuloso, elapsedTimeGuloso, "guloso");
 
-                if (melhorCaminhoGuloso == melhorCaminho) {
+                if (melhorCaminhoGuloso.equals(melhorCaminho)) {
                     escreverSolucaoEmArquivo(tamanhoAtual, "iguais.txt", melhorCaminhoGuloso, elapsedTimeGuloso,
                             "guloso");
                     caminhosIguais++;
@@ -187,6 +187,7 @@ public class CaixeiroViajanteForcaBruta {
         }
         // escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, mediaTempo);
     }
+
 
     public static List<Integer> caixeiroViajanteGuloso(int[][] grafo) {
         List<Integer> caminho = new ArrayList<>();
