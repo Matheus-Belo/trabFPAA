@@ -130,6 +130,7 @@ public class CaixeiroViajanteForcaBruta {
         int vertices = 10, tamanhoGrupo = 1000;
         boolean continuar = true;
         long elapsedTimeFB = 0, mediaTempo = 0, elapsedTotalTime = 0;
+        int caminhosIguais = 0;
         String nomeArquivo = "caixeiro-viajante.txt";
         List<Integer> melhorCaminho = null;
         List<Integer> melhorCaminhoGuloso = null;
@@ -153,6 +154,11 @@ public class CaixeiroViajanteForcaBruta {
                 long elapsedTimeGuloso = System.currentTimeMillis() - startTimeGuloso;
                 escreverSolucaoEmArquivo(tamanhoAtual, nomeArquivo, melhorCaminhoGuloso, elapsedTimeGuloso, "guloso");
 
+                if (melhorCaminhoGuloso == melhorCaminho) {
+                    escreverSolucaoEmArquivo(tamanhoAtual, "iguais.txt", melhorCaminhoGuloso, elapsedTimeGuloso,
+                            "guloso");
+                    caminhosIguais++;
+                }
                 System.out.println("Melhor caminho encontrado para tamanho " + tamanhoAtual + " do vertice " + vertices
                         + ". Seguindo...");
                 // mediaTempo = (elapsedTime / tamanhoGrupo);
@@ -172,10 +178,12 @@ public class CaixeiroViajanteForcaBruta {
                  */
             }
             continuar = false;
-            mediaTempo = (elapsedTotalTime / tamanhoGrupo);
-            System.out.println("Tempo total medio de iteração: " + mediaTempo + " millisegundos.");
+            // mediaTempo = (elapsedTotalTime / tamanhoGrupo);
+            // System.out.println("Tempo total medio de iteração: " + mediaTempo + "
+            // millisegundos.");
             // System.out.println("Tempo médio de iteração para grupo de " + vertices + "
             // vertices: " + mediaTempo + " millisegundos.");
+            System.out.println("Execução finalizada, foram encontrados " + caminhosIguais + " caminhos iguais.");
         }
         // escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, mediaTempo);
     }
