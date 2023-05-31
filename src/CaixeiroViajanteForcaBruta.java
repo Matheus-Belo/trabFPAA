@@ -96,11 +96,13 @@ public class CaixeiroViajanteForcaBruta {
         int valor;
         for (int i = 0; i < matriz.length; i++) {
             matriz[i][i] = -1;
+            escreverGrafoEmArquivo(i, i, matriz[i][i], "grafos-caixeiro-viajante.txt");
             for (int j = i + 1; j < matriz.length; j++) {
                 valor = aleatorio.nextInt(25) + 1;
                 matriz[i][j] = valor;
                 matriz[j][i] = valor;
                 // System.out.println("[" + i + "][" + j + "] - " + matriz[i][j]);
+                escreverGrafoEmArquivo(i, j, matriz[i][j], "grafos-caixeiro-viajante.txt");
             }
         }
         return matriz;
@@ -126,10 +128,22 @@ public class CaixeiroViajanteForcaBruta {
         }
     }
 
+    private static void escreverGrafoEmArquivo(int i, int j, int grafo, String nomeArquivo) {
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo, true))) {
+
+            writer.write((i + ", " + j + ", " + grafo));
+            writer.newLine();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
         int vertices = 10, tamanhoGrupo = 1000;
         boolean continuar = true;
-        long elapsedTimeFB = 0, mediaTempo = 0, elapsedTotalTime = 0;
+        long elapsedTimeFB = 0, mediaTempo = 0, elapsedTotalTimeFB = 0, elapsedTotalTimeGuloso = 0;
         int caminhosIguais = 0;
         String nomeArquivo = "caixeiro-viajante.txt";
         List<Integer> melhorCaminho = null;
@@ -146,12 +160,18 @@ public class CaixeiroViajanteForcaBruta {
                 caixeiroViajante.encontrarMelhorCaminho();
                 melhorCaminho = caixeiroViajante.getMelhorCaminho();
                 elapsedTimeFB = System.currentTimeMillis() - startTimeFB;
+                elapsedTotalTimeFB += elapsedTimeFB;
+                if (melhorCaminho.get(0) != melhorCaminho.get(melhorCaminho.size() - 1)) {
+                    melhorCaminho.add(melhorCaminho.get(0));
+                }
+
                 escreverSolucaoEmArquivo(tamanhoAtual, nomeArquivo, melhorCaminho, elapsedTimeFB, "forca-bruta");
 
                 // Este bloco calcula o tempo gasto pro grafo em Guloso e escreve o arquivo
-                long startTimeGuloso = System.currentTimeMillis();
+                long startTimeGuloso = System.nanoTime();
                 melhorCaminhoGuloso = caixeiroViajanteGuloso(grafo);
-                long elapsedTimeGuloso = System.currentTimeMillis() - startTimeGuloso;
+                long elapsedTimeGuloso = System.nanoTime() - startTimeGuloso;
+                elapsedTotalTimeGuloso += elapsedTimeGuloso;
                 escreverSolucaoEmArquivo(tamanhoAtual, nomeArquivo, melhorCaminhoGuloso, elapsedTimeGuloso, "guloso");
 
                 if (melhorCaminhoGuloso.equals(melhorCaminho)) {
@@ -165,6 +185,9 @@ public class CaixeiroViajanteForcaBruta {
 
                 System.out.println("-------------------------------------------------------");
                 /*
+                 * linha comentada pois não é mais utilizada para executar os 1000 algoritmos
+                 * finais.
+                 * Consta aqui para acompanhar como encontramos N-1
                  * if (elapsedTime > 240000) {
                  * System.out.println("O número de vértices que executa iterando por 4min é " +
                  * vertices);
@@ -178,16 +201,14 @@ public class CaixeiroViajanteForcaBruta {
                  */
             }
             continuar = false;
-            // mediaTempo = (elapsedTotalTime / tamanhoGrupo);
-            // System.out.println("Tempo total medio de iteração: " + mediaTempo + "
-            // millisegundos.");
-            // System.out.println("Tempo médio de iteração para grupo de " + vertices + "
-            // vertices: " + mediaTempo + " millisegundos.");
+            mediaTempo = (elapsedTotalTimeFB / tamanhoGrupo);
+            System.out.println("Tempo médio de força bruta: " + mediaTempo + " millisegundos.");
+            mediaTempo = (elapsedTotalTimeGuloso / tamanhoGrupo);
+            System.out.println("Tempo médio guloso: " + mediaTempo + " nano segundos.");
             System.out.println("Execução finalizada, foram encontrados " + caminhosIguais + " caminhos iguais.");
+            System.out.println("-------------------------------------------------------");
         }
-        // escreverSolucaoEmArquivo(nomeArquivo, melhorCaminho, mediaTempo);
     }
-
 
     public static List<Integer> caixeiroViajanteGuloso(int[][] grafo) {
         List<Integer> caminho = new ArrayList<>();
