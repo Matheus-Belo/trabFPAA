@@ -8,8 +8,8 @@ import java.util.Random;
 
 public class CaixeiroViajanteForcaBruta {
 
-    private int[][] grafo;
-    private int numCidades;
+    private final int[][] grafo;
+    private final int numCidades;
     private List<Integer> melhorCaminho;
 
     public CaixeiroViajanteForcaBruta(int[][] grafo) {

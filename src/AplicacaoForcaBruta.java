@@ -48,7 +48,7 @@ public class AplicacaoForcaBruta {
 
         long startTime = System.currentTimeMillis();
 
-        while (continua == true) {
+        while (continua) {
             int quantidadeTotalDeVertices = vertices;
             long tamanho = 70;
             int testeCadaTamanho;

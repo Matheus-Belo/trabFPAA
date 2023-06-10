@@ -31,3 +31,13 @@ até aproximadamente 3,5 segundos.
   algoritmo guloso. Verifique em quantas destas vezes ele encontrou a solução obtida
   pela força bruta e armazene o tempo médio para encontrar cada solução.
   * **d.** Comente as respostas encontradas.
+
+
+INSTRUÇOES PARA ADICIONAR DEPENDENCIAS USADAS NA IMPLEMENTAÇÃO:
+
+- INTELLIJ : https://www.jetbrains.com/help/idea/working-with-module-dependencies.html#dependency-scope
+- VSCODE : https://www.youtube.com/watch?v=3Qm54znQX2E
+
+PATHS DAS DEPENDENCIAS:
+
+./trabFPAA/commons-math
