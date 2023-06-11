@@ -13,7 +13,7 @@ public class ConvexHull {
 
         Point[]sortedPoints = sortPointsByXCoordinates(points);
 
-        Polygon convexHull = searchConvexHull(sortedPoints,0,points.length );
+        Polygon convexHull = searchConvexHull(sortedPoints,0,points.length-1 );
 
         return convexHull;
     }
