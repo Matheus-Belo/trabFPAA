@@ -2,9 +2,13 @@ import org.apache.commons.math4.legacy.linear.LUDecomposition;
 import org.apache.commons.math4.legacy.linear.MatrixUtils;
 import org.apache.commons.math4.legacy.linear.RealMatrix;
 
+import javax.xml.transform.Result;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.*;
+
+import static java.util.concurrent.ForkJoinTask.invokeAll;
 
 public class ConvexHull {
 
@@ -14,6 +18,14 @@ public class ConvexHull {
         Point[]sortedPoints = sortPointsByXCoordinates(points);
 
         Polygon convexHull = searchConvexHull(sortedPoints,0,points.length-1 );
+
+        return convexHull;
+    }
+
+    private Polygon parallelConvexHull(Point[] points) {
+
+        Point[]sortedPoints = sortPointsByXCoordinates(points.clone());
+        Polygon convexHull = searchParallelConvexHull(sortedPoints,0,points.length-1);
 
         return convexHull;
     }
@@ -28,6 +40,7 @@ public class ConvexHull {
     }
 
     public Polygon searchConvexHull (Point[]points, int start, int end) {
+
         if ( (end-start+1) > 3){
             int mid = (start+end) / 2;
             Polygon esq = searchConvexHull(points, start, mid);
@@ -40,16 +53,34 @@ public class ConvexHull {
 
     }
 
-    private Polygon createBasePolygon(Point[] points, int start, int end) {
+    public Polygon searchParallelConvexHull (Point[]points, int start, int end) {
+        if ( (end-start+1) > 3){
+            int mid = (start+end) / 2;
 
-        Polygon basePoligon = new Polygon();
+            ForkJoinTask<Polygon> task1Esq = ForkJoinTask.adapt(() -> searchParallelConvexHull(points,start, mid));
+            ForkJoinTask<Polygon> task2Dir = ForkJoinTask.adapt(() -> searchParallelConvexHull(points,mid + 1, end));
+            ForkJoinTask.invokeAll(task1Esq,task2Dir);
 
-        for (Point actualPoint:
-             points) {
-            basePoligon.addPoint(actualPoint.getLocation().x, actualPoint.getLocation().y);
+            Polygon esq = task1Esq.join();
+            Polygon dir = task2Dir.join();
+
+            return mergePolygons(esq,dir);
+        }else{
+            return createBasePolygon(points,start,end);
         }
 
-        return basePoligon;
+    }
+
+    private Polygon createBasePolygon(Point[] points, int start, int end) {
+
+        Polygon basePolygon = new Polygon();
+
+        for (int i = start; i < end ; i++) {
+
+            basePolygon.addPoint(points[i].getLocation().x, points[i].getLocation().y);
+        }
+        System.out.println("debug");
+        return basePolygon;
     }
 
     private Polygon mergePolygons(Polygon esq, Polygon dir) {
@@ -77,9 +108,9 @@ public class ConvexHull {
     private double[][] getMatrixOfSelectedPolygon(Polygon actualPolygon) {
 
        double[][] matrixOfPoints = new double[3][3];
+
         for (int i = 0; i < matrixOfPoints.length; i++) {
             for (int j = 0; j < matrixOfPoints.length; j++) {
-
                 if(j == 0){
                     matrixOfPoints[i][j] = 1;
                 }else if (j == 1){
@@ -87,7 +118,6 @@ public class ConvexHull {
                 }else {
                     matrixOfPoints[i][j] = actualPolygon.ypoints[i];
                 }
-
             }
         }
         return matrixOfPoints;
@@ -112,16 +142,9 @@ public class ConvexHull {
 
         Point[] resp = new Point[tamArray];
 
-        resp[0] = new Point(1,2);
-        resp[1] = new Point(3,16);
-        resp[2] = new Point(1,5);
-        resp[3] = new Point(7,10);
-        resp[4] = new Point(6,8);
-        resp[5] = new Point(4,5);
-
-        /*for (int i = 0; i < tamArray ; i++) {
-
-        }*/
+        for (int i = 0; i < tamArray ; i++) {
+            resp[i] = RandomPointGenerator.nextRandom();
+        }
 
         return resp;
     }
@@ -135,9 +158,98 @@ public class ConvexHull {
         return null;
     }
 
+    public void questionBPartOne() {
+
+        long startTimeCV;
+        long elapsedTimeCV;
+        int numberOfPointsToGenerate = 10000;
+        do{
+            startTimeCV = System.currentTimeMillis();
+            Point[] generatedPoints = generatePoints(numberOfPointsToGenerate);
+            Polygon expectedPolygon = convexHull(generatedPoints);
+            elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
+            numberOfPointsToGenerate*=2;
+
+        }while (elapsedTimeCV <= 10000);
+
+
+
+    }
+
+    public void questionBPartTwo() {
+
+        long startTimeCV;
+        long elapsedTimeCV;
+        long startTimeParallelCV;
+        long elapsedTimeParallelCV;
+        long stackTimeCV = 0L;
+        long stackTimeParallelCV=0L;
+        long[] singleExecutionsCV = new long[51];
+        long[] singleExecutionsParallelCV = new long[51];
+
+        int numberOfPointsToGenerate = 10000;
+        Point[][] setOfPoints = new Point[50][numberOfPointsToGenerate];
+        for (int i = 0; i < 50; i++) {
+            setOfPoints[i] =  generatePoints(numberOfPointsToGenerate);
+        }
+
+        for (int i = 0; i < 50 ; i++) {
+
+
+            //testar convex hull convencional para o clone no i-ésimo (< 50) set de 10K-pontos
+            startTimeCV = System.currentTimeMillis();
+            Polygon expectedPolygon = convexHull(setOfPoints[i].clone());
+            elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
+            //armazenar da i-ésima execução convencional
+            singleExecutionsCV[i] = elapsedTimeCV;
+
+            //testar convex hull paralelo para o clone no i-ésimo (< 50) set de 10K-pontos
+            startTimeParallelCV = System.currentTimeMillis();
+            Polygon expectedPolygonParallel = parallelConvexHull(setOfPoints[i].clone());
+            elapsedTimeParallelCV = System.currentTimeMillis() - startTimeParallelCV;
+            //armazenar da i-ésima execução paralela
+            singleExecutionsParallelCV[i] = elapsedTimeParallelCV;
+
+
+            //Somar o tempo das execuções para ter o tempo total de execução de
+            //cada algoritmo separadamente
+            stackTimeCV+=elapsedTimeCV;
+            stackTimeParallelCV+= elapsedTimeParallelCV;
+
+            //conferir se os poligonos sao iguais ( sempre deverao ser iguais )
+            if(expectedPolygon.equals(expectedPolygonParallel)){
+                System.out.println("igual");
+            }else{
+                System.out.println("diferente, algo errrado");
+            }
+
+            //anotar dados num arquivo ?
+
+
+        }
+
+        //colocar o tempo de execuçao total na ultima posiçao do array de tempos individuais.
+        singleExecutionsCV[50] = stackTimeCV;
+        singleExecutionsParallelCV[50] = stackTimeParallelCV;
+
+
+    }
+
+
+
     public static void main(String[] args){
             ConvexHull callConvex = new ConvexHull();
 
+            //callConvex.questionBPartOne();
+            callConvex.questionBPartTwo();
+
+            Point[] generatedPoints = generatePoints(10);
+            Polygon expectedPolygon = callConvex.convexHull(generatedPoints);
+
+
+
+
+        /* teste Merge Poligons
             Polygon p1 = new Polygon();
             p1.addPoint(1,2);
             p1.addPoint(4,5);
@@ -150,15 +262,7 @@ public class ConvexHull {
             p2.addPoint(1,2);
             p2.addPoint(4,5);
             p2.addPoint(6,10);
-
-
-
-            Point[] generatedPoints = generatePoints(6);
-            Polygon expectedPolygon = callConvex.convexHull(generatedPoints);
-
-            //Polygon testPolygon = callConvex.mergePolygons(p1,p2);//new Polygon();
-
-           // testPolygon.addPoint(generatedPoints[0].getLocation().x, generatedPoints[1].getLocation().y);
+            //Polygon testPolygon = callConvex.mergePolygons(p1,p2);*/
 
 
     }
