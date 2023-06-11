@@ -3,26 +3,40 @@ import org.apache.commons.math4.legacy.linear.MatrixUtils;
 import org.apache.commons.math4.legacy.linear.RealMatrix;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class ConvexHull {
 
 
+    public Polygon convexHull (Point[]points){
 
+        Point[]sortedPoints = sortPointsByXCoordinates(points);
 
+        Polygon convexHull = searchConvexHull(sortedPoints,0,points.length );
 
+        return convexHull;
+    }
 
-    public Polygon connvexHull (Point[]points, int start, int end){
+    private Point[] sortPointsByXCoordinates(Point[] points) {
 
+        ArrayList<Point> pointList = new ArrayList<Point>();
+        pointList.addAll(List.of(points));
+        pointList.sort((Point p1, Point p2)-> p1.x - p2.x);
+        Point[] resp = pointList.toArray(new Point[pointList.size()]);
+        return resp;
+    }
+
+    public Polygon searchConvexHull (Point[]points, int start, int end) {
         if ( (end-start+1) > 3){
             int mid = (start+end) / 2;
-            Polygon esq = connvexHull(points, start, mid);
-            Polygon dir = connvexHull(points, mid+1, end);
+            Polygon esq = searchConvexHull(points, start, mid);
+            Polygon dir = searchConvexHull(points, mid+1, end);
 
             return mergePolygons(esq,dir);
         }else{
             return createBasePolygon(points,start,end);
         }
-
 
     }
 
@@ -94,8 +108,22 @@ public class ConvexHull {
 
 
 
-    private static Point[] generatePoints() {
-            return null;
+    private static Point[] generatePoints(int tamArray) {
+
+        Point[] resp = new Point[tamArray];
+
+        resp[0] = new Point(1,2);
+        resp[1] = new Point(3,16);
+        resp[2] = new Point(1,5);
+        resp[3] = new Point(7,10);
+        resp[4] = new Point(6,8);
+        resp[5] = new Point(4,5);
+
+        /*for (int i = 0; i < tamArray ; i++) {
+
+        }*/
+
+        return resp;
     }
 
 
@@ -109,23 +137,26 @@ public class ConvexHull {
 
     public static void main(String[] args){
             ConvexHull callConvex = new ConvexHull();
-            /*Polygon expectedPolygon ;
-
-            Point[] generatedPoints = generatePoints();
-
-            expectedPolygon = callConvex.connvexHull(generatedPoints, 0, generatedPoints.length );*/
 
             Polygon p1 = new Polygon();
             p1.addPoint(1,2);
             p1.addPoint(4,5);
-            p1.addPoint(6,10);
+            p1.addPoint(3,16);
+            p1.addPoint(2,5);
+            p1.addPoint(7,10);
+            p1.addPoint(6,8);
 
             Polygon p2 = new Polygon();
             p2.addPoint(1,2);
             p2.addPoint(4,5);
             p2.addPoint(6,10);
 
-            Polygon testPolygon = callConvex.mergePolygons(p1,p2);//new Polygon();
+
+
+            Point[] generatedPoints = generatePoints(6);
+            Polygon expectedPolygon = callConvex.convexHull(generatedPoints);
+
+            //Polygon testPolygon = callConvex.mergePolygons(p1,p2);//new Polygon();
 
            // testPolygon.addPoint(generatedPoints[0].getLocation().x, generatedPoints[1].getLocation().y);
 
