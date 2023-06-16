@@ -2,8 +2,8 @@ import org.apache.commons.math4.legacy.linear.LUDecomposition;
 import org.apache.commons.math4.legacy.linear.MatrixUtils;
 import org.apache.commons.math4.legacy.linear.RealMatrix;
 
-import javax.xml.transform.Result;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -83,13 +83,21 @@ public class ConvexHull {
         return basePolygon;
     }
 
-    private Polygon mergePolygons(Polygon esq, Polygon dir) {
+    private Polygon mergePolygons(Polygon left, Polygon right) {
 
+
+
+
+
+        Point biggestPointLeft = getBiggestPointOfPolygon(left);
+        Point biggestPointRight = getBiggestPointOfPolygon(right);
+        Point lowestPointLeft = getLowestPointOfPolygon(left);
+        Point lowestPointRight = getLowestPointOfPolygon(right);
 
         Polygon tempPolygon = new Polygon();
 
-        for (int i = 0; i < esq.xpoints.length; i++) {
-            tempPolygon.addPoint(esq.xpoints[i],esq.ypoints[i]);
+        for (int i = 0; i < left.xpoints.length; i++) {
+            tempPolygon.addPoint(left.xpoints[i],left.ypoints[i]);
         }
 
 
@@ -150,11 +158,11 @@ public class ConvexHull {
     }
 
 
-    public Polygon getBiggestPointOfPolygon(Polygon polygon){
+    public Point getBiggestPointOfPolygon(Polygon polygon){
         return null;
     }
 
-    public Polygon getLowestPointOfPolygon(Polygon polygon){
+    public Point getLowestPointOfPolygon(Polygon polygon){
         return null;
     }
 
@@ -241,15 +249,15 @@ public class ConvexHull {
             ConvexHull callConvex = new ConvexHull();
 
             //callConvex.questionBPartOne();
-            callConvex.questionBPartTwo();
+            //callConvex.questionBPartTwo();
 
-            Point[] generatedPoints = generatePoints(10);
-            Polygon expectedPolygon = callConvex.convexHull(generatedPoints);
-
-
+            //Point[] generatedPoints = generatePoints(10);
+            //Polygon expectedPolygon = callConvex.convexHull(generatedPoints);
 
 
-        /* teste Merge Poligons
+
+
+        // teste Merge Poligons
             Polygon p1 = new Polygon();
             p1.addPoint(1,2);
             p1.addPoint(4,5);
@@ -262,7 +270,14 @@ public class ConvexHull {
             p2.addPoint(1,2);
             p2.addPoint(4,5);
             p2.addPoint(6,10);
+
+
+            Rectangle2D p3 = p1.getBounds2D();
+            System.out.println("debug");
+
+
             //Polygon testPolygon = callConvex.mergePolygons(p1,p2);*/
+
 
 
     }
