@@ -135,6 +135,7 @@ public class ConvexHull {
         // Encontre o ponto mais distante da linha formada pelos pontos mais à esquerda e mais à direita
         for (int i = 0; i < points.size(); i++) {
             int distance = getDistance(points.get(leftmost), points.get(rightmost), points.get(i));
+
             if (getSide(points.get(leftmost), points.get(rightmost), points.get(i)) == side && distance > maxDistance) {
                 maxDistance = distance;
                 index = i;
@@ -299,7 +300,7 @@ public class ConvexHull {
         convexHull.questionBPartOne();
         //convexHull.questionBPartTwo();
 
-        // Exemplo de uso
+
         /*List<Point> points = new ArrayList<>();
         points.add(new Point(0, 3));
         points.add(new Point(2, 2));
