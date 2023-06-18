@@ -23,16 +23,25 @@ public class BackTracking {
 
     public void encontrarMelhorCaminho() {
         int[] caminhoAtual = new int[numCidades];
-        int[] todasCidades = new int[numCidades];
+        //int[] todasCidades = new int[numCidades];
+        boolean[] visitado = new boolean[numCidades];
 
-        for (int i = 0; i < numCidades; i++) {
+        /*for (int i = 0; i < numCidades; i++) {
             todasCidades[i] = i;
         }
 
         permutarCaminhos(todasCidades, caminhoAtual, 0);
+        */
+
+        caminhoAtual[0] = 0; // Começa no vértice 0
+        visitado[0] = true;
+
+        backtrack(caminhoAtual, visitado, 1);
+
+        melhorCaminho.add(0); // Adiciona o vértice inicial ao final do caminho
     }
 
-    private void permutarCaminhos(int[] todasCidades, int[] caminhoAtual, int indice) {
+    /*private void permutarCaminhos(int[] todasCidades, int[] caminhoAtual, int indice) {
         if (indice == numCidades) {
             calcularCustoCaminho(caminhoAtual);
             return;
@@ -44,18 +53,65 @@ public class BackTracking {
                 permutarCaminhos(todasCidades, caminhoAtual, indice + 1);
             }
         }
+    }*/
+
+    private void backtrack(int[] caminhoAtual, boolean[] visitado, int posicao) {
+        if (posicao == numCidades) {
+            // Chegou ao final do caminho
+            int ultimaCidade = caminhoAtual[posicao - 1];
+            int cidadeInicial = caminhoAtual[0];
+
+            if (grafo[ultimaCidade][cidadeInicial] != 0) {
+                // Calcula o custo total do caminho
+                int custoTotal = calcularCustoTotal(caminhoAtual);
+
+                if (melhorCaminho.isEmpty() || custoTotal < calcularCustoTotal(melhorCaminho)) {
+                    melhorCaminho = new ArrayList<>(Arrays.stream(caminhoAtual).boxed().toList());
+                }
+            }
+            return;
+        }
+
+        for (int proximo = 0; proximo < numCidades; proximo++) {
+            if (!visitado[proximo] && grafo[caminhoAtual[posicao - 1]][proximo] != 0) {
+                caminhoAtual[posicao] = proximo;
+                visitado[proximo] = true;
+
+                backtrack(caminhoAtual, visitado, posicao + 1);
+
+                caminhoAtual[posicao] = 0;
+                visitado[proximo] = false;
+            }
+        }
     }
 
-    private boolean visitado(int cidade, int[] caminho, int indice) {
+    /*private boolean visitado(int cidade, int[] caminho, int indice) {
         for (int i = 0; i < indice; i++) {
             if (caminho[i] == cidade) {
                 return true;
             }
         }
         return false;
+    }*/
+
+    private int calcularCustoTotal(int[] caminho) {
+        int custoTotal = 0;
+
+        for (int i = 0; i < numCidades - 1; i++) {
+            int origem = caminho[i];
+            int destino = caminho[i + 1];
+            custoTotal += grafo[origem][destino];
+        }
+
+        int ultimaCidade = caminho[numCidades - 1];
+        int cidadeInicial = caminho[0];
+        custoTotal += grafo[ultimaCidade][cidadeInicial];
+
+        return custoTotal;
     }
 
-    private void calcularCustoCaminho(int[] caminho) {
+
+    /*private void calcularCustoCaminho(int[] caminho) {
         int custoTotal = 0;
 
         for (int i = 0; i < numCidades - 1; i++) {
@@ -71,8 +127,8 @@ public class BackTracking {
         if (melhorCaminho.isEmpty() || custoTotal < calcularCustoTotal(melhorCaminho)) {
             melhorCaminho = new ArrayList<>(Arrays.asList(Arrays.stream(caminho).boxed().toArray(Integer[]::new)));
         }
-    }
-
+    }*/
+    
     private int calcularCustoTotal(List<Integer> caminho) {
         int custoTotal = 0;
 

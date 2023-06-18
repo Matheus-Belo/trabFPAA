@@ -9,7 +9,7 @@ import java.util.List;
 public class AplicacaoBackTracking {
 
     public static void main(String[] args) {
-        int vertices = 10, tamanhoGrupo = 10;
+        int vertices = 10, tamanhoGrupo = 1000;
         boolean continuar = true;
         long elapsedTimeFB = 0, mediaTempo = 0, elapsedTotalTimeFB = 0; //, elapsedTotalTimeGuloso = 0
         //int caminhosIguais = 0;
@@ -19,8 +19,10 @@ public class AplicacaoBackTracking {
 
         while (continuar) {
             for (int tamanhoAtual = 0; tamanhoAtual < tamanhoGrupo; tamanhoAtual++) {
+                int teste = 0;
+                int [][]teste2 = new int[teste][teste];
 
-                BackTracking back = new BackTracking(null);
+                BackTracking back = new BackTracking(teste2);
 
                 int[][] grafo = back.grafoCompletoPonderado(vertices);
                 BackTracking caixeiroViajante = new BackTracking(grafo);
