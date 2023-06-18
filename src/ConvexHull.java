@@ -1,169 +1,197 @@
-import org.apache.commons.math4.legacy.linear.LUDecomposition;
-import org.apache.commons.math4.legacy.linear.MatrixUtils;
-import org.apache.commons.math4.legacy.linear.RealMatrix;
-
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
-
-import static java.util.concurrent.ForkJoinTask.invokeAll;
+import java.util.concurrent.ForkJoinTask;
 
 public class ConvexHull {
 
+    public static List<Point> findConvexHull(List<Point> points) {
 
-    public Polygon convexHull (Point[]points){
-
-        Point[]sortedPoints = sortPointsByXCoordinates(points);
-
-        Polygon convexHull = searchConvexHull(sortedPoints,0,points.length-1 );
-
-        return convexHull;
-    }
-
-    private Polygon parallelConvexHull(Point[] points) {
-
-        Point[]sortedPoints = sortPointsByXCoordinates(points.clone());
-        Polygon convexHull = searchParallelConvexHull(sortedPoints,0,points.length-1);
-
-        return convexHull;
-    }
-
-    private Point[] sortPointsByXCoordinates(Point[] points) {
-
-        ArrayList<Point> pointList = new ArrayList<Point>();
-        pointList.addAll(List.of(points));
-        pointList.sort((Point p1, Point p2)-> p1.x - p2.x);
-        Point[] resp = pointList.toArray(new Point[pointList.size()]);
-        return resp;
-    }
-
-    public Polygon searchConvexHull (Point[]points, int start, int end) {
-
-        if ( (end-start+1) > 3){
-            int mid = (start+end) / 2;
-            Polygon esq = searchConvexHull(points, start, mid);
-            Polygon dir = searchConvexHull(points, mid+1, end);
-
-            return mergePolygons(esq,dir);
-        }else{
-            return createBasePolygon(points,start,end);
+        if (points.size() < 3) {
+            // O fecho convexo não é possível com menos de 3 pontos
+            throw new IllegalArgumentException("O conjunto de pontos precisa ter pelo menos 3 pontos");
         }
 
-    }
+        points.sort((Point p1, Point p2)-> p1.x - p2.x);
 
-    public Polygon searchParallelConvexHull (Point[]points, int start, int end) {
-        if ( (end-start+1) > 3){
-            int mid = (start+end) / 2;
+        List<Point> convexHull = new ArrayList<>();
 
-            ForkJoinTask<Polygon> task1Esq = ForkJoinTask.adapt(() -> searchParallelConvexHull(points,start, mid));
-            ForkJoinTask<Polygon> task2Dir = ForkJoinTask.adapt(() -> searchParallelConvexHull(points,mid + 1, end));
-            ForkJoinTask.invokeAll(task1Esq,task2Dir);
-
-            Polygon esq = task1Esq.join();
-            Polygon dir = task2Dir.join();
-
-            return mergePolygons(esq,dir);
-        }else{
-            return createBasePolygon(points,start,end);
-        }
-
-    }
-
-    private Polygon createBasePolygon(Point[] points, int start, int end) {
-
-        Polygon basePolygon = new Polygon();
-
-        for (int i = start; i < end ; i++) {
-
-            basePolygon.addPoint(points[i].getLocation().x, points[i].getLocation().y);
-        }
-        System.out.println("debug");
-        return basePolygon;
-    }
-
-    private Polygon mergePolygons(Polygon left, Polygon right) {
-
-
-
-
-
-        Point biggestPointLeft = getBiggestPointOfPolygon(left);
-        Point biggestPointRight = getBiggestPointOfPolygon(right);
-        Point lowestPointLeft = getLowestPointOfPolygon(left);
-        Point lowestPointRight = getLowestPointOfPolygon(right);
-
-        Polygon tempPolygon = new Polygon();
-
-        for (int i = 0; i < left.xpoints.length; i++) {
-            tempPolygon.addPoint(left.xpoints[i],left.ypoints[i]);
-        }
-
-
-        double[][] matrixOfPoints = getMatrixOfSelectedPolygon(tempPolygon);
-
-        RealMatrix m = MatrixUtils.createRealMatrix(matrixOfPoints);
-
-        Double determinant = getDeterminant(m);
-        Double determinant2 = det(m);
-        System.out.println(determinant+", "+determinant2);
-
-
-        return null;
-    }
-
-    private double[][] getMatrixOfSelectedPolygon(Polygon actualPolygon) {
-
-       double[][] matrixOfPoints = new double[3][3];
-
-        for (int i = 0; i < matrixOfPoints.length; i++) {
-            for (int j = 0; j < matrixOfPoints.length; j++) {
-                if(j == 0){
-                    matrixOfPoints[i][j] = 1;
-                }else if (j == 1){
-                    matrixOfPoints[i][j] = actualPolygon.xpoints[i];
-                }else {
-                    matrixOfPoints[i][j] = actualPolygon.ypoints[i];
-                }
+        // Encontre o ponto mais à esquerda e o ponto mais à direita
+        int leftmost = 0, rightmost = 0;
+        for (int i = 1; i < points.size(); i++) {
+            if (points.get(i).x < points.get(leftmost).x) {
+                leftmost = i;
+            }
+            if (points.get(i).x > points.get(rightmost).x) {
+                rightmost = i;
             }
         }
-        return matrixOfPoints;
+
+
+        // Divide os pontos em dois conjuntos, acima e abaixo da linha formada pelos pontos mais à esquerda e mais à direita
+        List<Point> upperHull = divideAndConquer(points, leftmost, rightmost, 1);
+        List<Point> lowerHull = divideAndConquer(points, leftmost, rightmost, -1);
+
+
+
+        // Combine os fechos convexos superior e inferior
+        convexHull.addAll(upperHull);
+        convexHull.addAll(lowerHull);
+
+        return convexHull;
     }
 
-    public static double getDeterminant(RealMatrix cov) {
+    public static List<Point> parallelFindConvexHull(List<Point> points) {
 
-        double resp = (new LUDecomposition(cov)).getDeterminant();
-        return resp;
+        if (points.size() < 3) {
+            // O fecho convexo não é possível com menos de 3 pontos
+            throw new IllegalArgumentException("O conjunto de pontos precisa ter pelo menos 3 pontos");
+        }
+
+        points.sort((Point p1, Point p2)-> p1.x - p2.x);
+
+        List<Point> convexHull = new ArrayList<>();
+
+        // Encontre o ponto mais à esquerda e o ponto mais à direita
+        int leftmost = 0, rightmost = 0;
+        for (int i = 1; i < points.size(); i++) {
+            if (points.get(i).x < points.get(leftmost).x) {
+                leftmost = i;
+            }
+            if (points.get(i).x > points.get(rightmost).x) {
+                rightmost = i;
+            }
+        }
+
+        // Divide os pontos em dois conjuntos, acima e abaixo da linha formada pelos pontos mais à esquerda e mais à direita
+        int finalLeftmost = leftmost;
+        int finalRightmost = rightmost;
+        ForkJoinTask<List<Point>> upperHull = ForkJoinTask.adapt(() -> divideAndConquerParallel(points, finalLeftmost, finalRightmost, 1));
+        int finalLeftmost1 = leftmost;
+        int finalRightmost1 = rightmost;
+        ForkJoinTask<List<Point>> lowerHull = ForkJoinTask.adapt(() -> divideAndConquerParallel(points, finalLeftmost1, finalRightmost1, -1));
+
+        ForkJoinTask.invokeAll(upperHull,lowerHull);
+
+        List<Point> lower = lowerHull.join();
+        List<Point> upper = upperHull.join();
+
+
+        // Combine os fechos convexos superior e inferior
+        convexHull.addAll(lower);
+        convexHull.addAll(upper);
+
+        return convexHull;
     }
-    public static double det(final RealMatrix m) {
-        LUDecomposition LU = new LUDecomposition(m);
-        return LU.getDeterminant();
+
+
+    // Função auxiliar para realizar a divisão e conquista
+    private static List<Point> divideAndConquerParallel(List<Point> points, int leftmost, int rightmost, int side) {
+        List<Point> hull = new ArrayList<>();
+
+        int index = -1;
+        int maxDistance = 0;
+
+        // Encontre o ponto mais distante da linha formada pelos pontos mais à esquerda e mais à direita
+        for (int i = 0; i < points.size(); i++) {
+            int distance = getDistance(points.get(leftmost), points.get(rightmost), points.get(i));
+            if (getSide(points.get(leftmost), points.get(rightmost), points.get(i)) == side && distance > maxDistance) {
+                maxDistance = distance;
+                index = i;
+            }
+        }
+
+        if (index == -1) {
+            // Não foram encontrados mais pontos, retornar o ponto encontrado anteriormente
+            hull.add(points.get(leftmost));
+            hull.add(points.get(rightmost));
+            return hull;
+        }
+
+        // Recursivamente divide os pontos em dois conjuntos e combina os fechos convexos resultantes
+        int finalIndex = index;
+        ForkJoinTask<List<Point>> task1Hull1 = ForkJoinTask.adapt(() -> divideAndConquer(points, leftmost, finalIndex, -getSide(points.get(leftmost), points.get(finalIndex), points.get(rightmost))));
+        int finalIndex1 = finalIndex;
+        ForkJoinTask<List<Point>> task2Hull2 = ForkJoinTask.adapt(() -> divideAndConquer(points, finalIndex1, rightmost, -getSide(points.get(finalIndex1), points.get(rightmost), points.get(leftmost))));
+        ForkJoinTask.invokeAll(task1Hull1,task2Hull2);
+
+        List<Point> hull1 = task2Hull2.join();
+        List<Point> hull2 = task1Hull1.join();
+
+
+        hull.addAll(hull1);
+        hull.addAll(hull2);
+
+        return hull;
     }
 
+    private static List<Point> divideAndConquer(List<Point> points, int leftmost, int rightmost, int side) {
+        List<Point> hull = new ArrayList<>();
 
+        int index = -1;
+        int maxDistance = 0;
 
+        // Encontre o ponto mais distante da linha formada pelos pontos mais à esquerda e mais à direita
+        for (int i = 0; i < points.size(); i++) {
+            int distance = getDistance(points.get(leftmost), points.get(rightmost), points.get(i));
+            if (getSide(points.get(leftmost), points.get(rightmost), points.get(i)) == side && distance > maxDistance) {
+                maxDistance = distance;
+                index = i;
+            }
+        }
 
+        if (index == -1) {
+            // Não foram encontrados mais pontos, retornar o ponto encontrado anteriormente
+            hull.add(points.get(leftmost));
+            hull.add(points.get(rightmost));
+            return hull;
+        }
 
+        // Recursivamente divide os pontos em dois conjuntos e combina os fechos convexos resultantes
+        List<Point> hull1 = divideAndConquer(points, leftmost, index, -getSide(points.get(leftmost), points.get(index), points.get(rightmost)));
+        List<Point> hull2 = divideAndConquer(points, index, rightmost, -getSide(points.get(index), points.get(rightmost), points.get(leftmost)));
 
-    private static Point[] generatePoints(int tamArray) {
+        hull.addAll(hull1);
+        hull.addAll(hull2);
 
-        Point[] resp = new Point[tamArray];
+        return hull;
+    }
+
+    // Função auxiliar para calcular a distância entre um ponto e uma linha
+    private static int getDistance(Point a, Point b, Point c) {
+        return (b.x - a.x) * (a.y - c.y) - (b.y - a.y) * (a.x - c.x);
+    }
+
+    // Função auxiliar para determinar de qual lado de uma linha um ponto está
+    private static int getSide(Point a, Point b, Point c) {
+        int val = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        if (val > 0) {
+            return 1; // Ponto à esquerda da linha
+        } else if (val < 0) {
+            return -1; // Ponto à direita da linha
+        } else {
+            return 0; // Ponto na linha
+        }
+    }
+
+    // Função auxiliar para imprimir os pontos do fecho convexo
+    private static void printConvexHull(List<Point> convexHull) {
+        System.out.println("Fecho Convexo:");
+        for (Point point : convexHull) {
+            System.out.println("(" + point.x + ", " + point.y + ")");
+        }
+    }
+
+    private static List<Point> generatePoints(int tamArray) {
+
+        List<Point> resp = new LinkedList<Point>();
 
         for (int i = 0; i < tamArray ; i++) {
-            resp[i] = RandomPointGenerator.nextRandom();
+            resp.add(RandomPointGenerator.nextRandom());
         }
 
         return resp;
-    }
-
-
-    public Point getBiggestPointOfPolygon(Polygon polygon){
-        return null;
-    }
-
-    public Point getLowestPointOfPolygon(Polygon polygon){
-        return null;
     }
 
     public void questionBPartOne() {
@@ -172,16 +200,32 @@ public class ConvexHull {
         long elapsedTimeCV;
         int numberOfPointsToGenerate = 10000;
         do{
+            List<Point> generatedPoints = generatePoints(numberOfPointsToGenerate);
+
+            /* para debugar System.out.println("Pontos Gerados");
+            for (Point point : generatedPoints) {
+                System.out.println("(" + point.x + ", " + point.y + ")");
+            }
+            System.out.println(" ------ ");*/
+
             startTimeCV = System.currentTimeMillis();
-            Point[] generatedPoints = generatePoints(numberOfPointsToGenerate);
-            Polygon expectedPolygon = convexHull(generatedPoints);
+            List<Point>  expectedPolygon = findConvexHull(generatedPoints);
             elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
+
+            generatedPoints = new ArrayList<Point>();
+
+
+            /*System.out.println("ConvexHull");
+            for (Point point : expectedPolygon) {
+                System.out.println("(" + point.x + ", " + point.y + ")");
+            }*/
+            System.out.println("-- fim parcial - tamanho do conjunto: "+numberOfPointsToGenerate+" - tempo: "+elapsedTimeCV+ "ms --");
+
             numberOfPointsToGenerate*=2;
 
-        }while (elapsedTimeCV <= 10000);
+        }while (elapsedTimeCV <= 100000);
 
-
-
+        System.out.println("-fim-");
     }
 
     public void questionBPartTwo() {
@@ -196,9 +240,10 @@ public class ConvexHull {
         long[] singleExecutionsParallelCV = new long[51];
 
         int numberOfPointsToGenerate = 10000;
-        Point[][] setOfPoints = new Point[50][numberOfPointsToGenerate];
+
+        List<List<Point>> setOfPoints = new LinkedList<List<Point>>();
         for (int i = 0; i < 50; i++) {
-            setOfPoints[i] =  generatePoints(numberOfPointsToGenerate);
+            setOfPoints.add(generatePoints(numberOfPointsToGenerate));
         }
 
         for (int i = 0; i < 50 ; i++) {
@@ -206,14 +251,14 @@ public class ConvexHull {
 
             //testar convex hull convencional para o clone no i-ésimo (< 50) set de 10K-pontos
             startTimeCV = System.currentTimeMillis();
-            Polygon expectedPolygon = convexHull(setOfPoints[i].clone());
+            List<Point> expectedPolygon = findConvexHull(setOfPoints.get(i));
             elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
             //armazenar da i-ésima execução convencional
             singleExecutionsCV[i] = elapsedTimeCV;
 
             //testar convex hull paralelo para o clone no i-ésimo (< 50) set de 10K-pontos
             startTimeParallelCV = System.currentTimeMillis();
-            Polygon expectedPolygonParallel = parallelConvexHull(setOfPoints[i].clone());
+            List<Point> expectedPolygonParallel = parallelFindConvexHull(setOfPoints.get(i));
             elapsedTimeParallelCV = System.currentTimeMillis() - startTimeParallelCV;
             //armazenar da i-ésima execução paralela
             singleExecutionsParallelCV[i] = elapsedTimeParallelCV;
@@ -224,64 +269,72 @@ public class ConvexHull {
             stackTimeCV+=elapsedTimeCV;
             stackTimeParallelCV+= elapsedTimeParallelCV;
 
+
+            System.out.println("-- fim parcial: "+i+". - tamanho do conjunto: "+numberOfPointsToGenerate+" - " +
+                    "tempo normal: "+elapsedTimeCV+ "ms - "+
+                    "tempo paralelo: "+elapsedTimeParallelCV+ "ms --");
+
             //conferir se os poligonos sao iguais ( sempre deverao ser iguais )
             if(expectedPolygon.equals(expectedPolygonParallel)){
                 System.out.println("igual");
             }else{
-                System.out.println("diferente, algo errrado");
+                System.out.println("diferente ( ponteiro )");
             }
 
             //anotar dados num arquivo ?
 
 
         }
-
         //colocar o tempo de execuçao total na ultima posiçao do array de tempos individuais.
         singleExecutionsCV[50] = stackTimeCV;
         singleExecutionsParallelCV[50] = stackTimeParallelCV;
-
-
     }
 
 
 
-    public static void main(String[] args){
-            ConvexHull callConvex = new ConvexHull();
+    public static void main(String[] args) {
 
-            //callConvex.questionBPartOne();
-            //callConvex.questionBPartTwo();
+        ConvexHull convexHull = new ConvexHull();
 
-            //Point[] generatedPoints = generatePoints(10);
-            //Polygon expectedPolygon = callConvex.convexHull(generatedPoints);
+        convexHull.questionBPartOne();
+        //convexHull.questionBPartTwo();
 
+        // Exemplo de uso
+        /*List<Point> points = new ArrayList<>();
+        points.add(new Point(0, 3));
+        points.add(new Point(2, 2));
+        points.add(new Point(1, 1));
+        points.add(new Point(2, 1));
+        points.add(new Point(3, 0));
+        points.add(new Point(0, 0));
+        points.add(new Point(3, 3));
 
-
-
-        // teste Merge Poligons
-            Polygon p1 = new Polygon();
-            p1.addPoint(1,2);
-            p1.addPoint(4,5);
-            p1.addPoint(3,16);
-            p1.addPoint(2,5);
-            p1.addPoint(7,10);
-            p1.addPoint(6,8);
-
-            Polygon p2 = new Polygon();
-            p2.addPoint(1,2);
-            p2.addPoint(4,5);
-            p2.addPoint(6,10);
-
-
-            Rectangle2D p3 = p1.getBounds2D();
-            System.out.println("debug");
+        List<Point> points2 = new ArrayList<>();
+        points2.add(new Point(0, 0));
+        points2.add(new Point(0, 4));
+        points2.add(new Point(1, 1));
+        points2.add(new Point(2, 2));
+        points2.add(new Point(3, 1));
+        points2.add(new Point(4, 4));
+        points2.add(new Point(4, 0));
 
 
-            //Polygon testPolygon = callConvex.mergePolygons(p1,p2);*/
+        List<Point> p1 = new ArrayList<>();
+        p1.add (new Point(1, 2));
+        p1.add (new Point(4, 5));
+        p1.add (new Point(3, 16));
+        p1.add (new Point(2, 7));
+        p1.add (new Point(7, 10));
+        p1.add (new Point(5, 8));
+        p1.add (new Point(5, 5));
+        p1.add (new Point(5, -3));
+        p1.add (new Point(-4, 5));
 
+
+        List<Point> convexHull = parallelFindConvexHull(generatePoints(10000));
+        List<Point> convexHullNormal = findConvexHull(generatePoints(10000));
+        printConvexHull(convexHullNormal);*/
 
 
     }
-
-
-
 }
