@@ -13,7 +13,9 @@ public class CaixeiroViajanteProgDinamica_Marcos {
 
     /*
 
-
+            n= aresta atual
+     */
+    //C(S, i) = min { C(n-{i}, j) + dis(j, i)}
 
 
     /**
@@ -42,8 +44,44 @@ public class CaixeiroViajanteProgDinamica_Marcos {
         return matriz;
     }
 
-    //public static List<>
+
+    public static void printMatrix(int[][]matrix){
+
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix.length; j++) {
+                System.out.print(matrix[i][j]+" ");
+            }
+            System.out.println(" ");
+        }
+
+    }
+
+    public static int[][] tspPD (int[][] grafoCidades){
+
+        int[][] resp = new int[grafoCidades.length][grafoCidades.length];
+
+        // iniciar a matrix com 0 para inserção das cidades
+        for (int i = 0; i < resp.length; i++) {
+            for (int j = 0; j < resp.length; j++) {
+                resp[i][j]=0;
+            }
+        }
 
 
+        for (int i = 0; i < resp.length; i++) {
+            for (int j = 0; j < resp.length; j++) {
+                resp[i][j]=0;
+            }
+        }
 
+        return  resp;
+    }
+
+
+    public static void main(String[] args) {
+
+            printMatrix(grafoCompletoPonderado(5));
+
+
+    }
 }
