@@ -150,7 +150,7 @@ public class ConvexHull {
             int cont=0;
             for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
 
-            System.out.println(actualSet);
+            //System.out.println(actualSet);
 
             String toTXT = actualSet+"\n"+controleParcial+"" +
                     "\nHull Paralelo: "+hullToString(expectedPolygonParallel)+
@@ -198,7 +198,7 @@ public class ConvexHull {
             //armazenar da i-ésima execução convencional
             singleExecutionsCV[i] = elapsedTimeCV;
 
-            System.out.println("fim parcial do nao paralelo");
+            System.out.println("fim parcial do nao paralelo question class");
 
             //testar convex hull paralelo para o clone no i-ésimo (< 50) set de 10K-pontos
             startTimeParallelCV = System.currentTimeMillis();
@@ -229,7 +229,7 @@ public class ConvexHull {
             int cont=0;
             for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
 
-            System.out.println(actualSet);
+            //System.out.println(actualSet);
 
             String toTXT = actualSet+"\n"+controleParcial+"" +
                     "\nHull Paralelo: "+hullToString(expectedPolygonParallel)+
@@ -348,11 +348,11 @@ public class ConvexHull {
 
         ConvexHull convexHull = new ConvexHull();
 
-        convexHull.questionBPartOne(1000);
+        convexHull.questionBPartOne(10000);
         System.out.println("controle - fim parte1 questao b");
-        convexHull.questionBPartTwo(5,1000);
+        convexHull.questionBPartTwo(50,10000);
         System.out.println("controle - fim parte2 questao b");
-        convexHull.questionClass(1,1000);
+        convexHull.questionClass(1,1000000);
         System.out.println("controle - fim parte1 questao classe");
 
 
