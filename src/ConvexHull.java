@@ -240,7 +240,7 @@ public class ConvexHull {
         long[] singleExecutionsCV = new long[51];
         long[] singleExecutionsParallelCV = new long[51];
 
-        int numberOfPointsToGenerate = 10000;
+        int numberOfPointsToGenerate = 1000000;
 
         List<List<Point>> setOfPoints = new LinkedList<List<Point>>();
         for (int i = 0; i < 50; i++) {
@@ -256,6 +256,8 @@ public class ConvexHull {
             elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
             //armazenar da i-ésima execução convencional
             singleExecutionsCV[i] = elapsedTimeCV;
+
+            System.out.println("fim parcial do nao paralelo");
 
             //testar convex hull paralelo para o clone no i-ésimo (< 50) set de 10K-pontos
             startTimeParallelCV = System.currentTimeMillis();
@@ -297,8 +299,8 @@ public class ConvexHull {
 
         ConvexHull convexHull = new ConvexHull();
 
-        convexHull.questionBPartOne();
-        //convexHull.questionBPartTwo();
+        //convexHull.questionBPartOne();
+        convexHull.questionBPartTwo();
 
 
         /*List<Point> points = new ArrayList<>();
