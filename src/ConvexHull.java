@@ -1,5 +1,9 @@
 import java.awt.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ForkJoinTask;
@@ -19,11 +23,11 @@ public class ConvexHull {
 
         // Encontre o ponto mais à esquerda e o ponto mais à direita
         int leftmost = 0, rightmost = 0;
-        for (int i = 1; i < points.size(); i++) {
+        for (int i = 0; i < points.size(); i++) {
             if (points.get(i).x < points.get(leftmost).x) {
                 leftmost = i;
             }
-            if (points.get(i).x > points.get(rightmost).x) {
+            if ((points.get(i).x > points.get(rightmost).x) ) {
                 rightmost = i;
             }
         }
@@ -38,6 +42,7 @@ public class ConvexHull {
         // Combine os fechos convexos superior e inferior
         convexHull.addAll(upperHull);
         convexHull.addAll(lowerHull);
+
 
         return convexHull;
     }
@@ -96,7 +101,9 @@ public class ConvexHull {
         // Encontre o ponto mais distante da linha formada pelos pontos mais à esquerda e mais à direita
         for (int i = 0; i < points.size(); i++) {
             int distance = getDistance(points.get(leftmost), points.get(rightmost), points.get(i));
-            if (getSide(points.get(leftmost), points.get(rightmost), points.get(i)) == side && distance > maxDistance) {
+            int actualSide = getSide(points.get(leftmost), points.get(rightmost), points.get(i));  // distacia do ponto a reta
+
+            if (actualSide == side && distance > maxDistance) {
                 maxDistance = distance;
                 index = i;
             }
@@ -135,8 +142,9 @@ public class ConvexHull {
         // Encontre o ponto mais distante da linha formada pelos pontos mais à esquerda e mais à direita
         for (int i = 0; i < points.size(); i++) {
             int distance = getDistance(points.get(leftmost), points.get(rightmost), points.get(i));
+            int actualSide = getSide(points.get(leftmost), points.get(rightmost), points.get(i)); // distancia do ponto a reta
 
-            if (getSide(points.get(leftmost), points.get(rightmost), points.get(i)) == side && distance > maxDistance) {
+            if ( actualSide == side && distance > maxDistance) {
                 maxDistance = distance;
                 index = i;
             }
@@ -161,7 +169,8 @@ public class ConvexHull {
 
     // Função auxiliar para calcular a distância entre um ponto e uma linha
     private static int getDistance(Point a, Point b, Point c) {
-        return (b.x - a.x) * (a.y - c.y) - (b.y - a.y) * (a.x - c.x);
+        int val = (b.x - a.x) * (a.y - c.y) - (b.y - a.y) * (a.x - c.x);
+        return val;
     }
 
     // Função auxiliar para determinar de qual lado de uma linha um ponto está
@@ -169,7 +178,7 @@ public class ConvexHull {
         int val = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
         if (val > 0) {
             return 1; // Ponto à esquerda da linha
-        } else if (val < 0) {
+        } else if (val <  0) {
             return -1; // Ponto à direita da linha
         } else {
             return 0; // Ponto na linha
@@ -195,11 +204,15 @@ public class ConvexHull {
         return resp;
     }
 
-    public void questionBPartOne() {
+    public void questionBPartOne(int numberOfPointsToGenerate) {
 
         long startTimeCV;
         long elapsedTimeCV;
-        int numberOfPointsToGenerate = 10000;
+        long stackTimeCV = 0L;
+        Date dataAtual = new Date();
+        String nomeArquivo= "QUESTAO1 EXECUCAO"+System.currentTimeMillis();
+        int contExec = 0;
+
         do{
             List<Point> generatedPoints = generatePoints(numberOfPointsToGenerate);
 
@@ -210,8 +223,10 @@ public class ConvexHull {
             System.out.println(" ------ ");*/
 
             startTimeCV = System.currentTimeMillis();
-            List<Point>  expectedPolygon = findConvexHull(generatedPoints);
+            List<Point>  expectedPolygon = findConvexHull2(generatedPoints);
             elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
+
+            stackTimeCV+=elapsedTimeCV;
 
             generatedPoints = new ArrayList<Point>();
 
@@ -220,16 +235,24 @@ public class ConvexHull {
             for (Point point : expectedPolygon) {
                 System.out.println("(" + point.x + ", " + point.y + ")");
             }*/
-            System.out.println("-- fim parcial - tamanho do conjunto: "+numberOfPointsToGenerate+" - tempo: "+elapsedTimeCV+ "ms --");
+            String controleParcial = ("-- fim parcial - tamanho do conjunto: "+numberOfPointsToGenerate+" - tempo: "+elapsedTimeCV+ "ms --\n");
+            System.out.println(controleParcial);
+
+            escreverSolucaoEmArquivo(controleParcial,nomeArquivo);
 
             numberOfPointsToGenerate*=2;
+            contExec++;
+        }while (elapsedTimeCV <= 10000);
 
-        }while (elapsedTimeCV <= 100000);
 
-        System.out.println("-fim-");
+        String result = "\nSolução Média: "+(stackTimeCV/contExec)+"ms. ";
+        System.out.println(result);
+        escreverSolucaoEmArquivo(result,nomeArquivo);
+
+
     }
 
-    public void questionBPartTwo() {
+    public void questionBPartTwo(int quantExec, int numberOfPointsToGenerate) {
 
         long startTimeCV;
         long elapsedTimeCV;
@@ -237,17 +260,19 @@ public class ConvexHull {
         long elapsedTimeParallelCV;
         long stackTimeCV = 0L;
         long stackTimeParallelCV=0L;
-        long[] singleExecutionsCV = new long[51];
-        long[] singleExecutionsParallelCV = new long[51];
+        long[] singleExecutionsCV = new long[quantExec+1];
+        long[] singleExecutionsParallelCV = new long[quantExec+1];
 
-        int numberOfPointsToGenerate = 1000000;
+        Date dataAtual = new Date();
+        String nomeArquivo= "QUESTAO2 EXECUCAO"+System.currentTimeMillis();
+
 
         List<List<Point>> setOfPoints = new LinkedList<List<Point>>();
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < quantExec; i++) {
             setOfPoints.add(generatePoints(numberOfPointsToGenerate));
         }
 
-        for (int i = 0; i < 50 ; i++) {
+        for (int i = 0; i < quantExec ; i++) {
 
 
             //testar convex hull convencional para o clone no i-ésimo (< 50) set de 10K-pontos
@@ -273,34 +298,216 @@ public class ConvexHull {
             stackTimeParallelCV+= elapsedTimeParallelCV;
 
 
-            System.out.println("-- fim parcial: "+i+". - tamanho do conjunto: "+numberOfPointsToGenerate+" - " +
+           String controleParcial = ("-- fim parcial: "+i+". - tamanho do conjunto: "+numberOfPointsToGenerate+" - " +
                     "tempo normal: "+elapsedTimeCV+ "ms - "+
                     "tempo paralelo: "+elapsedTimeParallelCV+ "ms --");
 
-            //conferir se os poligonos sao iguais ( sempre deverao ser iguais )
-            if(expectedPolygon.equals(expectedPolygonParallel)){
-                System.out.println("igual");
-            }else{
-                System.out.println("diferente ( ponteiro )");
-            }
+            System.out.println(controleParcial);
+
+
+
 
             //anotar dados num arquivo ?
 
+            String actualSet = "\nACTUAL SET-> ";
+            int cont=0;
+            for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
+
+            System.out.println(actualSet);
+
+            String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+
+            escreverSolucaoEmArquivo(toTXT,nomeArquivo);
 
         }
         //colocar o tempo de execuçao total na ultima posiçao do array de tempos individuais.
-        singleExecutionsCV[50] = stackTimeCV;
-        singleExecutionsParallelCV[50] = stackTimeParallelCV;
+        singleExecutionsCV[quantExec] = stackTimeCV;
+        singleExecutionsParallelCV[quantExec] = stackTimeParallelCV;
+
+        String result = "\nSolução Média não paralela: "+(stackTimeCV/quantExec)+"; \nSolução Média paralela: "+(stackTimeParallelCV/quantExec)+". ";
+        escreverSolucaoEmArquivo(result,nomeArquivo);
+
     }
 
+    public void questionClass(int quantExec, int numberOfPointsToGenerate) {
+
+        long startTimeCV;
+        long elapsedTimeCV;
+        long startTimeParallelCV;
+        long elapsedTimeParallelCV;
+        long stackTimeCV = 0L;
+        long stackTimeParallelCV=0L;
+        long[] singleExecutionsCV = new long[quantExec+1];
+        long[] singleExecutionsParallelCV = new long[quantExec+1];
+
+        Date dataAtual = new Date();
+        String nomeArquivo= "QUESTAO2 EXECUCAO"+System.currentTimeMillis();
+
+        List<List<Point>> setOfPoints = new LinkedList<List<Point>>();
+        for (int i = 0; i < quantExec; i++) {
+            setOfPoints.add(generatePoints(numberOfPointsToGenerate));
+        }
+
+        for (int i = 0; i < quantExec ; i++) {
+
+
+            //testar convex hull convencional para o clone no i-ésimo (< 50) set de 10K-pontos
+            startTimeCV = System.currentTimeMillis();
+            List<Point> expectedPolygon = findConvexHull2(setOfPoints.get(i));
+            elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
+            //armazenar da i-ésima execução convencional
+            singleExecutionsCV[i] = elapsedTimeCV;
+
+            System.out.println("fim parcial do nao paralelo");
+
+            //testar convex hull paralelo para o clone no i-ésimo (< 50) set de 10K-pontos
+            startTimeParallelCV = System.currentTimeMillis();
+            List<Point> expectedPolygonParallel =findParallelConvexHull2(setOfPoints.get(i));
+            elapsedTimeParallelCV = System.currentTimeMillis() - startTimeParallelCV;
+            //armazenar da i-ésima execução paralela
+            singleExecutionsParallelCV[i] = elapsedTimeParallelCV;
+
+
+            //Somar o tempo das execuções para ter o tempo total de execução de
+            //cada algoritmo separadamente
+            stackTimeCV+=elapsedTimeCV;
+            stackTimeParallelCV+= elapsedTimeParallelCV;
+
+
+            String controleParcial = ("-- fim parcial: "+i+". - tamanho do conjunto: "+numberOfPointsToGenerate+" - " +
+                    "tempo normal: "+elapsedTimeCV+ "ms - "+
+                    "tempo paralelo: "+elapsedTimeParallelCV+ "ms --");
+
+            System.out.println(controleParcial);
+
+
+
+
+            //anotar dados num arquivo ?
+
+            String actualSet = "\nACTUAL SET-> ";
+            int cont=0;
+            for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
+
+            System.out.println(actualSet);
+
+            String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+
+            escreverSolucaoEmArquivo(toTXT,nomeArquivo);
+
+        }
+        //colocar o tempo de execuçao total na ultima posiçao do array de tempos individuais.
+        singleExecutionsCV[quantExec] = stackTimeCV;
+        singleExecutionsParallelCV[quantExec] = stackTimeParallelCV;
+
+        String result = "\nSolução Média não paralela: "+(stackTimeCV/quantExec)+"; \nSolução Média paralela: "+(stackTimeParallelCV/quantExec)+". ";
+        escreverSolucaoEmArquivo(result,nomeArquivo);
+
+    }
+
+    public static List<Point> findConvexHull2(List<Point> points) {
+        if (points.size() <= 3) {
+            return points;
+        }
+
+        int mid = points.size() / 2;
+        List<Point> leftPoints = points.subList(0, mid);
+        List<Point> rightPoints = points.subList(mid, points.size());
+
+        List<Point> leftHull = findConvexHull2(leftPoints);
+        List<Point> rightHull = findConvexHull2(rightPoints);
+
+        return mergeHulls2(leftHull, rightHull);
+    }
+
+    public static List<Point> findParallelConvexHull2(List<Point> points) {
+        if (points.size() <= 3) {
+            return points;
+        }
+
+        int mid = points.size() / 2;
+        List<Point> leftPoints = points.subList(0, mid);
+        List<Point> rightPoints = points.subList(mid, points.size());
+
+        // Recursivamente divide os pontos em dois conjuntos e combina os fechos convexos resultantes
+
+        ForkJoinTask<List<Point>> task1Hull1 = ForkJoinTask.adapt(() -> findConvexHull2(leftPoints));
+        ForkJoinTask<List<Point>> task2Hull2 = ForkJoinTask.adapt(() -> findConvexHull2(rightPoints));
+        ForkJoinTask.invokeAll(task1Hull1,task2Hull2);
+
+
+        List<Point> leftHull = task1Hull1.join();
+        List<Point> rightHull = task2Hull2.join();
+
+        return mergeHulls2(leftHull, rightHull);
+    }
+
+    private static List<Point> mergeHulls2(List<Point> leftHull, List<Point> rightHull) {
+        int leftSize = leftHull.size();
+        int rightSize = rightHull.size();
+
+        // Encontra o ponto mais alto do envoltorio esquerdo
+        Point highestLeft = leftHull.get(0);
+        for (int i = 0; i < leftSize; i++) {
+            if (leftHull.get(i).y > highestLeft.y) {
+                highestLeft = leftHull.get(i);
+            }
+        }
+
+        // Encontra o ponto mais baixo do envoltorio esquerdo
+        Point lowestLeft = leftHull.get(0);
+        for (int i = 0; i < leftSize; i++) {
+            if (leftHull.get(i).y < lowestLeft.y) {
+                lowestLeft = leftHull.get(i);
+            }
+        }
+
+        // Encontra o ponto mais alto do envoltorio direito
+        Point highestRight = rightHull.get(0);
+        for (int i = 0; i < rightSize; i++) {
+            if (rightHull.get(i).y > highestRight.y) {
+                highestRight = rightHull.get(i);
+            }
+        }
+
+        // Encontra o ponto mais baixo do envoltorio direito
+        Point lowestRight = rightHull.get(0);
+        for (int i = 0; i < rightSize; i++) {
+            if (rightHull.get(i).y < lowestRight.y) {
+                lowestRight = rightHull.get(i);
+            }
+        }
+
+        List<Point> hull = new ArrayList<>();
+        hull.add(highestLeft);
+        hull.add(lowestRight);
+        hull.add(highestRight);
+        hull.add(lowestLeft);
+
+        return hull;
+    }
+
+    private static void escreverSolucaoEmArquivo(String solucao, String nomeArquivo) {
+
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo, true))) {
+
+           writer.write(solucao);
+           writer.newLine();
+           writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     public static void main(String[] args) {
 
         ConvexHull convexHull = new ConvexHull();
 
-        //convexHull.questionBPartOne();
-        convexHull.questionBPartTwo();
+        convexHull.questionBPartOne(10000);
+        convexHull.questionBPartTwo(50,10000);
+        convexHull.questionClass(1,1000000);
 
 
         /*List<Point> points = new ArrayList<>();
@@ -333,10 +540,21 @@ public class ConvexHull {
         p1.add (new Point(5, -3));
         p1.add (new Point(-4, 5));
 
+        List<Point> points3 = new ArrayList<>();
+        points3.add(new Point(0, 0));
+        points3.add(new Point(1, 1));
+        points3.add(new Point(2, 2));
+        points3.add(new Point(1, 2));
+        points3.add(new Point(2, 1));
+        points3.add(new Point(0, 2));
 
-        List<Point> convexHull = parallelFindConvexHull(generatePoints(10000));
-        List<Point> convexHullNormal = findConvexHull(generatePoints(10000));
-        printConvexHull(convexHullNormal);*/
+
+        //List<Point> convexHulll = parallelFindConvexHull(generatePoints(10000));
+        //List<Point> convexHullNormal = findConvexHull(points);
+
+        p1.sort((Point sortPoint1, Point sortPoint2)-> sortPoint1.x - sortPoint2.x);
+        List<Point> convexHullNormal = findParallelConvexHull2(generatePoints(1000000));
+        printConvexHull(convexHullNormal);//*/
 
 
     }
