@@ -1,4 +1,7 @@
 import java.awt.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -14,10 +17,8 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
     public List<Point> convexHull (List<Point> points){
 
         List<Point>sortedPoints = sortPointsByXCoordinates(points);
-
         List<Point> convexHull = searchConvexHull(sortedPoints,0,points.size() );
 
-        //List<Point> convexHull = searchConvexHullIterativo(sortedPoints,0,points.size() );
 
 
         return convexHull;
@@ -136,11 +137,15 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
         return (value > 0) ? 1 : 2; // 1 para horário, 2 para anti-horário
     }
 
-    public void questionBPartOne() {
+    public void questionBPartOne(int numberOfPointsToGenerate) {
 
         long startTimeCV;
         long elapsedTimeCV;
-        int numberOfPointsToGenerate = 800;
+        long stackTimeCV = 0L;
+        Date dataAtual = new Date();
+        String nomeArquivo= "QUESTAO1 EXECUCAO"+System.currentTimeMillis();
+        int contExec = 0;
+
         do{
             List<Point> generatedPoints = generatePoints(numberOfPointsToGenerate);
 
@@ -154,6 +159,8 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
             List<Point>  expectedPolygon = convexHull(generatedPoints);
             elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
 
+            stackTimeCV+=elapsedTimeCV;
+
             generatedPoints = new ArrayList<Point>();
 
 
@@ -161,15 +168,24 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
             for (Point point : expectedPolygon) {
                 System.out.println("(" + point.x + ", " + point.y + ")");
             }*/
-            System.out.println("-- fim parcial - tamanho do conjunto: "+numberOfPointsToGenerate+" - tempo: "+elapsedTimeCV+ "ms --");
+            String controleParcial = ("-- fim parcial - tamanho do conjunto: "+numberOfPointsToGenerate+" - tempo: "+elapsedTimeCV+ "ms --\n");
+            System.out.println(controleParcial);
+
+            escreverSolucaoEmArquivo(controleParcial,nomeArquivo);
 
             numberOfPointsToGenerate*=2;
-
+            contExec++;
         }while (elapsedTimeCV <= 10000);
 
-        System.out.println("-fim-");
+
+        String result = "\nSolução Média: "+(stackTimeCV/contExec)+"ms. ";
+        System.out.println(result);
+        escreverSolucaoEmArquivo(result,nomeArquivo);
+
+
     }
-    public void questionBPartTwo() {
+
+    public void questionBPartTwo(int quantExec, int numberOfPointsToGenerate) {
 
         long startTimeCV;
         long elapsedTimeCV;
@@ -177,17 +193,19 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
         long elapsedTimeParallelCV;
         long stackTimeCV = 0L;
         long stackTimeParallelCV=0L;
-        long[] singleExecutionsCV = new long[51];
-        long[] singleExecutionsParallelCV = new long[51];
+        long[] singleExecutionsCV = new long[quantExec+1];
+        long[] singleExecutionsParallelCV = new long[quantExec+1];
 
-        int numberOfPointsToGenerate = 10000;
+        Date dataAtual = new Date();
+        String nomeArquivo= "QUESTAO2 EXECUCAO"+System.currentTimeMillis();
+
 
         List<List<Point>> setOfPoints = new LinkedList<List<Point>>();
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < quantExec; i++) {
             setOfPoints.add(generatePoints(numberOfPointsToGenerate));
         }
 
-        for (int i = 0; i < 50 ; i++) {
+        for (int i = 0; i < quantExec ; i++) {
 
 
             //testar convex hull convencional para o clone no i-ésimo (< 50) set de 10K-pontos
@@ -197,9 +215,11 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
             //armazenar da i-ésima execução convencional
             singleExecutionsCV[i] = elapsedTimeCV;
 
+            System.out.println("fim parcial do nao paralelo");
+
             //testar convex hull paralelo para o clone no i-ésimo (< 50) set de 10K-pontos
             startTimeParallelCV = System.currentTimeMillis();
-            List<Point> expectedPolygonParallel = parallelConvexHull(setOfPoints.get(i));
+            List<Point> expectedPolygonParallel = convexHull(setOfPoints.get(i));
             elapsedTimeParallelCV = System.currentTimeMillis() - startTimeParallelCV;
             //armazenar da i-ésima execução paralela
             singleExecutionsParallelCV[i] = elapsedTimeParallelCV;
@@ -211,37 +231,133 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
             stackTimeParallelCV+= elapsedTimeParallelCV;
 
 
-            System.out.println("-- fim parcial: "+i+". - tamanho do conjunto: "+numberOfPointsToGenerate+" - " +
+            String controleParcial = ("-- fim parcial: "+i+". - tamanho do conjunto: "+numberOfPointsToGenerate+" - " +
                     "tempo normal: "+elapsedTimeCV+ "ms - "+
                     "tempo paralelo: "+elapsedTimeParallelCV+ "ms --");
 
-            //conferir se os poligonos sao iguais ( sempre deverao ser iguais )
-            if(expectedPolygon.equals(expectedPolygonParallel)){
-                System.out.println("igual");
-            }else{
-                System.out.println("diferente ( ponteiro )");
-            }
+            System.out.println(controleParcial);
+
+
+
 
             //anotar dados num arquivo ?
 
+            String actualSet = "\nACTUAL SET-> ";
+            int cont=0;
+            for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
+
+            System.out.println(actualSet);
+
+            String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+
+            escreverSolucaoEmArquivo(toTXT,nomeArquivo);
 
         }
         //colocar o tempo de execuçao total na ultima posiçao do array de tempos individuais.
-        singleExecutionsCV[50] = stackTimeCV;
-        singleExecutionsParallelCV[50] = stackTimeParallelCV;
+        singleExecutionsCV[quantExec] = stackTimeCV;
+        singleExecutionsParallelCV[quantExec] = stackTimeParallelCV;
+
+        String result = "\nSolução Média não paralela: "+(stackTimeCV/quantExec)+"; \nSolução Média paralela: "+(stackTimeParallelCV/quantExec)+". ";
+        escreverSolucaoEmArquivo(result,nomeArquivo);
+
     }
 
+    public void questionClass(int quantExec, int numberOfPointsToGenerate) {
+
+        long startTimeCV;
+        long elapsedTimeCV;
+        long startTimeParallelCV;
+        long elapsedTimeParallelCV;
+        long stackTimeCV = 0L;
+        long stackTimeParallelCV=0L;
+        long[] singleExecutionsCV = new long[quantExec+1];
+        long[] singleExecutionsParallelCV = new long[quantExec+1];
+
+        Date dataAtual = new Date();
+        String nomeArquivo= "QUESTAO2 EXECUCAO"+System.currentTimeMillis();
+
+        List<List<Point>> setOfPoints = new LinkedList<List<Point>>();
+        for (int i = 0; i < quantExec; i++) {
+            setOfPoints.add(generatePoints(numberOfPointsToGenerate));
+        }
+
+        for (int i = 0; i < quantExec ; i++) {
 
 
+            //testar convex hull convencional para o clone no i-ésimo (< 50) set de 10K-pontos
+            startTimeCV = System.currentTimeMillis();
+            List<Point> expectedPolygon = convexHull(setOfPoints.get(i));
+            elapsedTimeCV = System.currentTimeMillis() - startTimeCV;
+            //armazenar da i-ésima execução convencional
+            singleExecutionsCV[i] = elapsedTimeCV;
+
+            System.out.println("fim parcial do nao paralelo");
+
+            //testar convex hull paralelo para o clone no i-ésimo (< 50) set de 10K-pontos
+            startTimeParallelCV = System.currentTimeMillis();
+            List<Point> expectedPolygonParallel =parallelConvexHull(setOfPoints.get(i));
+            elapsedTimeParallelCV = System.currentTimeMillis() - startTimeParallelCV;
+            //armazenar da i-ésima execução paralela
+            singleExecutionsParallelCV[i] = elapsedTimeParallelCV;
+
+
+            //Somar o tempo das execuções para ter o tempo total de execução de
+            //cada algoritmo separadamente
+            stackTimeCV+=elapsedTimeCV;
+            stackTimeParallelCV+= elapsedTimeParallelCV;
+
+
+            String controleParcial = ("-- fim parcial: "+i+". - tamanho do conjunto: "+numberOfPointsToGenerate+" - " +
+                    "tempo normal: "+elapsedTimeCV+ "ms - "+
+                    "tempo paralelo: "+elapsedTimeParallelCV+ "ms --");
+
+            System.out.println(controleParcial);
+
+
+
+
+            //anotar dados num arquivo ?
+
+            String actualSet = "\nACTUAL SET-> ";
+            int cont=0;
+            for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
+
+            System.out.println(actualSet);
+
+            String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+
+            escreverSolucaoEmArquivo(toTXT,nomeArquivo);
+
+        }
+        //colocar o tempo de execuçao total na ultima posiçao do array de tempos individuais.
+        singleExecutionsCV[quantExec] = stackTimeCV;
+        singleExecutionsParallelCV[quantExec] = stackTimeParallelCV;
+
+        String result = "\nSolução Média não paralela: "+(stackTimeCV/quantExec)+"; \nSolução Média paralela: "+(stackTimeParallelCV/quantExec)+". ";
+        escreverSolucaoEmArquivo(result,nomeArquivo);
+
+    }
+
+    private static void escreverSolucaoEmArquivo(String solucao, String nomeArquivo) {
+
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo, true))) {
+
+            writer.write(solucao);
+            writer.newLine();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public static void main(String[] args) {
-        ConvexHullDivideAndConquerorPlusGrahamScan callConvex = new ConvexHullDivideAndConquerorPlusGrahamScan();
+        ConvexHullDivideAndConquerorPlusGrahamScan convexHull = new ConvexHullDivideAndConquerorPlusGrahamScan();
+        convexHull.questionBPartOne(10000);
+        convexHull.questionBPartTwo(50,10000);
+        convexHull.questionClass(1,1000000);
 
-        //callConvex.questionBPartOne();
-        //callConvex.questionBPartTwo();
 
-
-
-        List<Point> points = new ArrayList<>();
+        /*List<Point> points = new ArrayList<>();
         points.add(new Point(0, 0));
         points.add(new Point(0, 4));
         points.add(new Point(1, 1));
@@ -264,11 +380,11 @@ public class ConvexHullDivideAndConquerorPlusGrahamScan {
 
         List<Point> generatedPoints = generatePoints(500);
         List<Point> generatedPoints2 = generatePoints(5000);
-        List<Point> convexHull = callConvex.convexHull(generatedPoints2);
+        List<Point> convexHullExpected = convexHull.convexHull(generatedPoints2);
 
-        for (Point point : convexHull) {
+        for (Point point : convexHullExpected) {
             System.out.println("(" + point.x + ", " + point.y + ")");
-        }
+        }*/
 
     }
 
