@@ -227,8 +227,6 @@ public class ConvexHullHeuristicaVerificaOrientacao {
 
                 stackTimeCV += elapsedTimeCV;
 
-                generatedPoints = new ArrayList<Point>();
-
 
             /*System.out.println("ConvexHull");
             for (Point point : expectedPolygon) {
@@ -237,8 +235,17 @@ public class ConvexHullHeuristicaVerificaOrientacao {
                 String controleParcial = ("-- fim parcial - tamanho do conjunto: " + numberOfPointsToGenerate + " - tempo: " + elapsedTimeCV + "ms --\n");
                 System.out.println(controleParcial);
 
-                escreverSolucaoEmArquivo(controleParcial, nomeArquivo);
+                String actualSet = "\nACTUAL SET-> ";
+                int cont=0;
+                for (Point p: generatedPoints ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
 
+                String toTXT = actualSet+"\n"+controleParcial+"" +
+                        "\nHull Não Paralelo: "+hullToString(expectedPolygon)+
+                        "\nFIM ITERACAO: "+contExec;
+
+                escreverSolucaoEmArquivo(toTXT,nomeArquivo);
+
+                generatedPoints = new ArrayList<Point>();
                 numberOfPointsToGenerate *= 2;
                 contExec++;
             } while (elapsedTimeCV <= 10000);
@@ -304,15 +311,17 @@ public class ConvexHullHeuristicaVerificaOrientacao {
 
 
 
-                //anotar dados num arquivo ?
-
+                //anotar dados num arquivo
                 String actualSet = "\nACTUAL SET-> ";
                 int cont=0;
                 for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
 
                 System.out.println(actualSet);
 
-                String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+                String toTXT = actualSet+"\n"+controleParcial+"" +
+                        "\nHull Paralelo: "+hullToString(expectedPolygonParallel)+
+                        "\nHull Não Paralelo: "+hullToString(expectedPolygon)+
+                        "\nFIM ITERACAO: "+i;
 
                 escreverSolucaoEmArquivo(toTXT,nomeArquivo);
 
@@ -380,15 +389,17 @@ public class ConvexHullHeuristicaVerificaOrientacao {
 
 
 
-                //anotar dados num arquivo ?
-
+                //anotar dados num arquivo
                 String actualSet = "\nACTUAL SET-> ";
                 int cont=0;
                 for (Point p: setOfPoints.get(i) ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
 
                 System.out.println(actualSet);
 
-                String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+                String toTXT = actualSet+"\n"+controleParcial+"" +
+                        "\nHull Paralelo: "+hullToString(expectedPolygonParallel)+
+                        "\nHull Não Paralelo: "+hullToString(expectedPolygon)+
+                        "\nFIM ITERACAO: "+i;
 
                 escreverSolucaoEmArquivo(toTXT,nomeArquivo);
 
@@ -412,6 +423,15 @@ public class ConvexHullHeuristicaVerificaOrientacao {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        private static String hullToString(List<Point> convexHull) {
+            String resp = "";
+            resp+=("Fecho Convexo: \n");
+            for (Point point : convexHull) {
+                resp+=("(" + point.x + ", " + point.y + ")\n");
+            }
+            resp+="\n";
+            return resp;
         }
 
 

@@ -5,6 +5,15 @@ import java.util.List;
 
 public class ConvexHullGrahamScan {
 
+        private static String hullToString(List<Point> convexHull) {
+            String resp = "";
+            resp+=("Fecho Convexo: \n");
+            for (Point point : convexHull) {
+                resp+=("(" + point.x + ", " + point.y + ")\n");
+            }
+            resp+="\n";
+            return resp;
+        }
         public static List<Point> convexHull(List<Point> points) {
             if (points.size() <= 3) {
                 return points;

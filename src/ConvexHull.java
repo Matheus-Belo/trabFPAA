@@ -11,11 +11,14 @@ import java.util.concurrent.ForkJoinTask;
 public class ConvexHull {
 
     // Função auxiliar para imprimir os pontos do fecho convexo
-    private static void printConvexHull(List<Point> convexHull) {
-        System.out.println("Fecho Convexo:");
+    private static String hullToString(List<Point> convexHull) {
+        String resp = "";
+        resp+=("Fecho Convexo: \n");
         for (Point point : convexHull) {
-            System.out.println("(" + point.x + ", " + point.y + ")");
+            resp+=("(" + point.x + ", " + point.y + ")\n");
         }
+        resp+="\n";
+        return resp;
     }
 
     private static List<Point> generatePoints(int tamArray) {
@@ -53,7 +56,7 @@ public class ConvexHull {
 
             stackTimeCV+=elapsedTimeCV;
 
-            generatedPoints = new ArrayList<Point>();
+
 
 
             /*System.out.println("ConvexHull");
@@ -63,8 +66,17 @@ public class ConvexHull {
             String controleParcial = ("-- fim parcial - tamanho do conjunto: "+numberOfPointsToGenerate+" - tempo: "+elapsedTimeCV+ "ms --\n");
             System.out.println(controleParcial);
 
-            escreverSolucaoEmArquivo(controleParcial,nomeArquivo);
+            String actualSet = "\nACTUAL SET-> ";
+            int cont=0;
+            for (Point p: generatedPoints ) { actualSet+="x:"+p.x+",y:"+p.y+"||"; cont++;if(cont == 100){actualSet+="\n";cont=0;}}
 
+            String toTXT = actualSet+"\n"+controleParcial+"" +
+                    "\nHull Não Paralelo: "+hullToString(expectedPolygon)+
+                    "\nFIM ITERACAO: "+contExec;
+
+            escreverSolucaoEmArquivo(toTXT,nomeArquivo);
+
+            generatedPoints = new ArrayList<Point>();
             numberOfPointsToGenerate*=2;
             contExec++;
         }while (elapsedTimeCV <= 10000);
@@ -132,7 +144,7 @@ public class ConvexHull {
 
 
 
-            //anotar dados num arquivo ?
+            //anotar dados num arquivo
 
             String actualSet = "\nACTUAL SET-> ";
             int cont=0;
@@ -140,7 +152,10 @@ public class ConvexHull {
 
             System.out.println(actualSet);
 
-            String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+            String toTXT = actualSet+"\n"+controleParcial+"" +
+                    "\nHull Paralelo: "+hullToString(expectedPolygonParallel)+
+                    "\nHull Não Paralelo: "+hullToString(expectedPolygon)+
+                    "\nFIM ITERACAO: "+i;
 
             escreverSolucaoEmArquivo(toTXT,nomeArquivo);
 
@@ -208,7 +223,7 @@ public class ConvexHull {
 
 
 
-            //anotar dados num arquivo ?
+            //anotar dados num arquivo
 
             String actualSet = "\nACTUAL SET-> ";
             int cont=0;
@@ -216,7 +231,10 @@ public class ConvexHull {
 
             System.out.println(actualSet);
 
-            String toTXT = actualSet+"\n"+controleParcial+"\n FIM ITERACAO: "+i;
+            String toTXT = actualSet+"\n"+controleParcial+"" +
+                    "\nHull Paralelo: "+hullToString(expectedPolygonParallel)+
+                    "\nHull Não Paralelo: "+hullToString(expectedPolygon)+
+                    "\nFIM ITERACAO: "+i;
 
             escreverSolucaoEmArquivo(toTXT,nomeArquivo);
 
@@ -330,9 +348,12 @@ public class ConvexHull {
 
         ConvexHull convexHull = new ConvexHull();
 
-        convexHull.questionBPartOne(10000);
-        convexHull.questionBPartTwo(50,10000);
-        convexHull.questionClass(1,1000000);
+        convexHull.questionBPartOne(1000);
+        System.out.println("controle - fim parte1 questao b");
+        convexHull.questionBPartTwo(5,1000);
+        System.out.println("controle - fim parte2 questao b");
+        convexHull.questionClass(1,1000);
+        System.out.println("controle - fim parte1 questao classe");
 
 
         /*List<Point> points = new ArrayList<>();
