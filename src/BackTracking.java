@@ -8,6 +8,8 @@ import java.util.Random;
 
 public class BackTracking {
     
+static  Random aleatorio = new Random(42);
+
     private final int[][] grafo;
     private final int numCidades;
     private List<Integer> melhorCaminho;
@@ -151,7 +153,7 @@ public class BackTracking {
 //static
     public int[][] grafoCompletoPonderado(int vertices) {
         int[][] matriz = new int[vertices][vertices];
-        Random aleatorio = new Random(); // - > receber valores diferentes na matriz toda vez que rodar o código
+        //Random aleatorio = new Random(); // - > receber valores diferentes na matriz toda vez que rodar o código
         int valor;
         for (int i = 0; i < matriz.length; i++) {
             matriz[i][i] = -1;
