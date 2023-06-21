@@ -38,7 +38,7 @@ static  Random aleatorio = new Random(42);
         caminhoAtual[0] = 0; // Começa no vértice 0
         visitado[0] = true;
 
-        backtrack(caminhoAtual, visitado, 1);
+        backtrack(caminhoAtual, visitado, 1, 0);
 
         melhorCaminho.add(0); // Adiciona o vértice inicial ao final do caminho
     }
@@ -57,7 +57,10 @@ static  Random aleatorio = new Random(42);
         }
     }*/
 
-    private void backtrack(int[] caminhoAtual, boolean[] visitado, int posicao) {
+    private void backtrack(int[] caminhoAtual, boolean[] visitado, int posicao, int custoTotal) {
+        
+        if (calcularCustoTotal(caminhoAtual) < calcularCustoTotal(melhorCaminho)) {
+        
         if (posicao == numCidades) {
             // Chegou ao final do caminho
             int ultimaCidade = caminhoAtual[posicao - 1];
@@ -65,7 +68,7 @@ static  Random aleatorio = new Random(42);
 
             if (grafo[ultimaCidade][cidadeInicial] != 0) {
                 // Calcula o custo total do caminho
-                int custoTotal = calcularCustoTotal(caminhoAtual);
+                 custoTotal = calcularCustoTotal(caminhoAtual);
 
                 if (melhorCaminho.isEmpty() || custoTotal < calcularCustoTotal(melhorCaminho)) {
                     melhorCaminho = new ArrayList<>(Arrays.stream(caminhoAtual).boxed().toList());
@@ -73,13 +76,14 @@ static  Random aleatorio = new Random(42);
             }
             return;
         }
+    }
 
         for (int proximo = 0; proximo < numCidades; proximo++) {
             if (!visitado[proximo] && grafo[caminhoAtual[posicao - 1]][proximo] != 0) {
                 caminhoAtual[posicao] = proximo;
                 visitado[proximo] = true;
 
-                backtrack(caminhoAtual, visitado, posicao + 1);
+                backtrack(caminhoAtual, visitado, posicao + 1, custoTotal);
 
                 caminhoAtual[posicao] = 0;
                 visitado[proximo] = false;
