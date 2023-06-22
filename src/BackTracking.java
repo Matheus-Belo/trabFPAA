@@ -57,10 +57,10 @@ static  Random aleatorio = new Random(42);
         }
     }*/
 
-    private void backtrack(int[] caminhoAtual, boolean[] visitado, int posicao, int custoTotal) {
-        
-        if (calcularCustoTotal(caminhoAtual) < calcularCustoTotal(melhorCaminho)) {
-        
+   private void backtrack(int[] caminhoAtual, boolean[] visitado, int posicao, int custoTotal) {
+        if (custoTotal < calcularCustoTotal(melhorCaminho))
+            return;
+
         if (posicao == numCidades) {
             // Chegou ao final do caminho
             int ultimaCidade = caminhoAtual[posicao - 1];
@@ -68,7 +68,7 @@ static  Random aleatorio = new Random(42);
 
             if (grafo[ultimaCidade][cidadeInicial] != 0) {
                 // Calcula o custo total do caminho
-                 custoTotal = calcularCustoTotal(caminhoAtual);
+                custoTotal = calcularCustoTotal(caminhoAtual);
 
                 if (melhorCaminho.isEmpty() || custoTotal < calcularCustoTotal(melhorCaminho)) {
                     melhorCaminho = new ArrayList<>(Arrays.stream(caminhoAtual).boxed().toList());
@@ -76,14 +76,13 @@ static  Random aleatorio = new Random(42);
             }
             return;
         }
-    }
 
         for (int proximo = 0; proximo < numCidades; proximo++) {
             if (!visitado[proximo] && grafo[caminhoAtual[posicao - 1]][proximo] != 0) {
                 caminhoAtual[posicao] = proximo;
                 visitado[proximo] = true;
 
-                backtrack(caminhoAtual, visitado, posicao + 1, custoTotal);
+                backtrack(caminhoAtual, visitado, posicao + 1, custoTotal + grafo[caminhoAtual[posicao - 1]][proximo]);
 
                 caminhoAtual[posicao] = 0;
                 visitado[proximo] = false;
@@ -136,8 +135,9 @@ static  Random aleatorio = new Random(42);
     }*/
     
     private int calcularCustoTotal(List<Integer> caminho) {
-        int custoTotal = 0;
+    int custoTotal = 0;
 
+    if (!caminho.isEmpty()) { // Verifica se a lista não está vazia
         for (int i = 0; i < numCidades - 1; i++) {
             int origem = caminho.get(i);
             int destino = caminho.get(i + 1);
@@ -147,9 +147,10 @@ static  Random aleatorio = new Random(42);
         int ultimaCidade = caminho.get(numCidades - 1);
         int cidadeInicial = caminho.get(0);
         custoTotal += grafo[ultimaCidade][cidadeInicial];
-
-        return custoTotal;
     }
+
+    return custoTotal;
+}
 
     public List<Integer> getMelhorCaminho() {
         return melhorCaminho;
